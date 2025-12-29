@@ -1,0 +1,27 @@
+# Local environment and caches
+.env
+__pycache__/
+.venv/
+.DS_Store
+.idea/
+.vscode/
+
+# Local data (SQLite, caches)
+/data/
+
+# Python build
+*.pyc
+*.pyo
+*.pyd
+*.egg-info/
+dist/
+build/
+
+# Vendorized research repo: keep code tracked, ignore bulky/sensitive artifacts
+EarningsCallAgenticRag/credentials.json
+EarningsCallAgenticRag/Results/
+EarningsCallAgenticRag/financial_statements*
+EarningsCallAgenticRag/maec_transcripts*.csv*
+EarningsCallAgenticRag/merged_data*.csv*
+EarningsCallAgenticRag/*.zip
+EarningsCallAgenticRag/neo4j.lock

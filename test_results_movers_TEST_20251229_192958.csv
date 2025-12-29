@@ -1,0 +1,4 @@
+symbol,year,quarter,category,company_name,sector,success,error,time_seconds,prediction,confidence,actual_return_30d_pct,correct,summary,reasons,token_cost_usd,agent_notes
+SMCI,2024,2,GAINER,Supermicro,Technology,True,,41.65,UNKNOWN,,139.68,,,[],0.001847,"{'financials': 'N/A', 'past': 'N/A', 'peers': 'N/A'}"
+APP,2024,3,GAINER,AppLovin Corporation,Technology,True,,35.51,UNKNOWN,,102.31,,,[],0.001847,"{'financials': 'N/A', 'past': 'N/A', 'peers': 'N/A'}"
+TTD,2024,4,LOSER,"The Trade Desk, Inc.",Technology,True,,39.42,UNKNOWN,,-54.31,,,[],0.001847,"{'financials': 'N/A', 'past': 'N/A', 'peers': 'N/A'}"

@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Route B · Earnings Call Analysis</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="hero">
+        <p class="eyebrow">WHALEFORCE · AI · AGENTIC RAG</p>
+        <h1>Real-Time Earnings Call Analysis</h1>
+        <p class="lede"></p>
+        <p class="muted small"><a class="link-light" href="calls.html">查看已分析的列表 →</a></p>
+        <p class="muted small"><a class="link-light" href="/prompts.html" target="_blank">⚙️ Agent Prompt 設定</a></p>
+      </header>
+
+      <div class="steps-grid">
+        <section class="panel">
+          <div class="panel-header">
+            <h2>1. 搜尋公司 / 代號</h2>
+          </div>
+          <div class="search-row">
+            <input id="search-input" type="text" placeholder="例如：AAPL 或 Apple" />
+            <button id="search-btn">搜尋</button>
+          </div>
+          <div id="status" class="status-text"></div>
+          <div id="results" class="results-list"></div>
+        </section>
+
+        <section class="panel">
+          <div class="panel-header">
+            <h2>2. 選擇季度</h2>
+          </div>
+          <div class="dates-row">
+            <select id="dates-select">
+              <option value="">請先選擇公司</option>
+            </select>
+            <button id="analyze-btn" disabled>分析</button>
+          </div>
+          <div class="analysis-actions">
+            <button id="cancel-btn" class="btn-ghost" disabled>停止</button>
+            <p id="analysis-progress" class="muted small"></p>
+          </div>
+          <p id="selected-symbol" class="muted info-text">尚未選擇公司</p>
+          <p id="dates-hint" class="muted small"></p>
+        </section>
+
+        <section class="panel">
+          <div class="panel-header">
+            <h2>3. 選擇模型</h2>
+          </div>
+          <div class="models-row">
+            <div class="field-stack">
+              <label class="field-label" for="main-model-select">Main Agent</label>
+              <select id="main-model-select">
+                <option value="gpt-5.1" selected>gpt-5.1（預設）</option>
+                <option value="gpt-5-mini">gpt-5-mini</option>
+                <option value="gpt-4o-mini">gpt-4o-mini</option>
+              </select>
+            </div>
+            <div class="field-stack">
+              <label class="field-label" for="helper-model-select">Helper Agents</label>
+              <select id="helper-model-select">
+                <option value="gpt-5-mini" selected>gpt-5-mini（預設）</option>
+                <option value="gpt-4o-mini">gpt-4o-mini</option>
+                <option value="gpt-5-nano">gpt-5-nano</option>
+              </select>
+            </div>
+            <div class="field-stack">
+              <label class="field-label">
+                <input type="checkbox" id="refresh-check" />
+                強制重新分析（略過快取）
+              </label>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <section class="panel card-full">
+        <div class="info-kpi-grid">
+          <div>
+            <h3>基礎資訊</h3>
+            <div class="meta meta-split">
+              <div class="meta-col">
+                <div><span class="label">Symbol</span><span id="meta-symbol">-</span></div>
+                <div><span class="label">Company</span><span id="meta-company">-</span></div>
+                <div><span class="label">Sector</span><span id="meta-sector">-</span></div>
+              </div>
+              <div class="meta-col">
+                <div><span class="label">Fiscal</span><span id="meta-fiscal">-</span></div>
+                <div><span class="label">Calendar</span><span id="meta-calendar">-</span></div>
+                <div><span class="label">Transcript Date</span><span id="meta-date">-</span></div>
+              </div>
+            </div>
+          </div>
+          <div>
+            <h3>總覽 KPI</h3>
+            <div class="kpi-grid">
+              <div class="kpi-card">
+                <span class="label">Prediction</span>
+                <div id="kpi-pred" class="kpi-value">-</div>
+              </div>
+              <div class="kpi-card">
+                <span class="label">Confidence</span>
+                <div id="kpi-conf" class="kpi-value">-</div>
+              </div>
+              <div class="kpi-card">
+                <span class="label">Post Return (3D)</span>
+                <div id="kpi-return" class="kpi-value">-</div>
+              </div>
+              <div class="kpi-card">
+                <span class="label">Token / Cost</span>
+                <div id="kpi-cost" class="kpi-value small">-</div>
+              </div>
+            </div>
+          </div>
+          <div>
+            <h3>Earnings 回測 (T+30)</h3>
+            <div id="backtest-info" class="backtest-box">
+              <div class="backtest-row">
+                <span class="label">Session</span>
+                <span id="backtest-session">-</span>
+              </div>
+              <div class="backtest-row">
+                <span class="label">From</span>
+                <span id="backtest-from">-</span>
+              </div>
+              <div class="backtest-row">
+                <span class="label">To</span>
+                <span id="backtest-to">-</span>
+              </div>
+              <div class="backtest-row">
+                <span class="label">Change</span>
+                <span id="backtest-change" class="kpi-value">-</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel card-full">
+        <div class="panel-header">
+          <h3 style="margin: 0;">Agentic RAG 結果</h3>
+          <div class="muted small">自動輸出英文與繁體中文版本，無需額外翻譯</div>
+        </div>
+        <div id="agentic-content" class="agentic">
+          <p class="muted">尚未執行分析。</p>
+        </div>
+      </section>
+
+      <section class="panel card-full detail-list">
+        <div class="detail-card">
+          <button class="detail-toggle" type="button" aria-expanded="false" data-target="detail-cmp">
+            <div>
+              <h3>Comparative Agent</h3>
+              <p id="detail-cmp-summary" class="muted small">尚無資料</p>
+            </div>
+            <span class="chevron">▼</span>
+          </button>
+          <div id="detail-cmp" class="detail-body" hidden>尚無資料</div>
+        </div>
+        <div class="detail-card">
+          <button class="detail-toggle" type="button" aria-expanded="false" data-target="detail-hist">
+            <div>
+              <h3>Historical Earnings</h3>
+              <p id="detail-hist-summary" class="muted small">尚無資料</p>
+            </div>
+            <span class="chevron">▼</span>
+          </button>
+          <div id="detail-hist" class="detail-body" hidden>尚無資料</div>
+        </div>
+        <div class="detail-card">
+          <button class="detail-toggle" type="button" aria-expanded="false" data-target="detail-perf">
+            <div>
+              <h3>Historical Performance</h3>
+              <p id="detail-perf-summary" class="muted small">尚無資料</p>
+            </div>
+            <span class="chevron">▼</span>
+          </button>
+          <div id="detail-perf" class="detail-body" hidden>尚無資料</div>
+        </div>
+        <div class="detail-card">
+          <button class="detail-toggle" type="button" aria-expanded="false" data-target="detail-baseline">
+            <div>
+              <h3>Baseline / Sentiment</h3>
+              <p id="detail-baseline-summary" class="muted small">預留</p>
+            </div>
+            <span class="chevron">▼</span>
+          </button>
+          <div id="detail-baseline" class="detail-body" hidden>預留</div>
+        </div>
+        <div class="detail-card">
+          <button class="detail-toggle" type="button" aria-expanded="false" data-target="detail-tokens">
+            <div>
+              <h3>Token & 成本</h3>
+              <p id="detail-tokens-summary" class="muted small">-</p>
+            </div>
+            <span class="chevron">▼</span>
+          </button>
+          <div id="detail-tokens" class="detail-body" hidden>-</div>
+        </div>
+      </section>
+
+      <section class="panel card-full">
+        <div class="panel-header">
+          <div style="display: flex; align-items: center; gap: 12px; justify-content: space-between; flex-wrap: wrap; width: 100%;">
+            <h2 style="margin: 0;">
+              <span id="today-earnings-label">近 7 日</span> 財報發佈範圍：
+              <span id="today-earnings-date">--</span>
+              （市值 &gt; 10B）
+            </h2>
+            <div class="control-row" style="flex-wrap: wrap; gap: 8px; justify-content: flex-end;">
+              <label class="small muted">
+                起日：
+                <input id="today-earnings-start" type="date" />
+              </label>
+              <label class="small muted">
+                迄日：
+                <input id="today-earnings-end" type="date" />
+              </label>
+              <button id="today-earnings-query" class="btn-ghost">查詢</button>
+            </div>
+          </div>
+          <p class="muted small" style="margin-top: 4px;">
+            資料來源：FMP Earnings Calendar · 每日美東 06:00 預熱「近 7 日」區間
+          </p>
+        </div>
+        <div id="today-earnings"></div>
+      </section>
+
+      <section class="panel card-full">
+        <div class="panel-header">
+          <h2>批次分析（最新季度）</h2>
+          <div class="muted small">輸入多個 ticker（逗號或換行分隔），自動抓最新季度分析</div>
+        </div>
+        <div class="batch-row">
+          <textarea id="batch-input" rows="3" placeholder="例如：AAPL, MSFT&#10;NVDA"></textarea>
+          <button id="batch-btn">批次分析</button>
+        </div>
+        <div id="batch-status" class="muted small"></div>
+        <div id="batch-results" class="batch-table"></div>
+      </section>
+
+      <section class="panel collapsible">
+        <button class="collapse-toggle" type="button" aria-expanded="false" aria-controls="debug-json">
+          <span>除錯用 JSON</span>
+          <span class="chevron">▼</span>
+        </button>
+        <div id="debug-json-wrap" class="collapse-body" hidden>
+          <pre id="debug-json" class="debug-block">{}</pre>
+        </div>
+      </section>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="script.js"></script>
+  </body>
+</html>

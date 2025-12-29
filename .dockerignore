@@ -1,0 +1,23 @@
+.git
+.gitignore
+.env
+.env.*
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.egg-info/
+dist/
+build/
+data/
+*.sqlite
+*.db
+
+# OS / editor
+.DS_Store
+.vscode/
+.idea/
+node_modules/
+npm-debug.log
+yarn-error.log
+*.log

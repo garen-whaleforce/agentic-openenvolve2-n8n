@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Earnings Calls 列表</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="hero">
+        <p class="eyebrow">Agentic RAG · Calls</p>
+        <h1>財報電話會列表</h1>
+        <p class="lede">查看已分析的財報電話會記錄，並前往詳情頁。</p>
+        <p class="muted small"><a href="index.html">回到搜尋/分析</a></p>
+      </header>
+
+      <section class="panel">
+        <div class="grid" style="grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));">
+          <div>
+            <label class="label">Symbol</label>
+            <input id="filter-symbol" type="text" placeholder="例如：AAPL" />
+          </div>
+          <div>
+            <label class="label">Sector</label>
+            <input id="filter-sector" type="text" placeholder="例如：Information Technology" />
+          </div>
+          <div>
+            <label class="label">日期起</label>
+            <input id="filter-date-from" type="date" />
+          </div>
+          <div>
+            <label class="label">日期迄</label>
+            <input id="filter-date-to" type="date" />
+          </div>
+          <div>
+            <label class="label">預測</label>
+            <select id="filter-pred">
+              <option value="">全部</option>
+              <option value="UP">UP</option>
+              <option value="DOWN">DOWN</option>
+              <option value="NEUTRAL">NEUTRAL</option>
+            </select>
+          </div>
+          <div>
+            <label class="label">排序</label>
+            <select id="filter-sort">
+              <option value="date_desc">日期新 → 舊</option>
+              <option value="date_asc">日期舊 → 新</option>
+              <option value="abs_return_desc">報酬絕對值大 → 小</option>
+              <option value="return_desc">報酬大 → 小</option>
+              <option value="conf_desc">信心度高 → 低</option>
+            </select>
+          </div>
+        </div>
+        <div style="margin-top: 12px; display: flex; gap: 8px;">
+          <button id="filter-run">套用篩選</button>
+          <button id="filter-reset" class="secondary">清除</button>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-header">
+          <h2>分析記錄</h2>
+          <div id="status" class="muted small">-</div>
+        </div>
+        <div class="table-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th>Symbol</th>
+                <th>日期</th>
+                <th>Sector</th>
+                <th>Post Return</th>
+                <th>Pred</th>
+                <th>Conf</th>
+                <th>查看</th>
+              </tr>
+            </thead>
+            <tbody id="calls-body">
+              <tr><td colspan="7" class="muted small">尚無資料</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+
+    <script src="calls.js"></script>
+  </body>
+</html>

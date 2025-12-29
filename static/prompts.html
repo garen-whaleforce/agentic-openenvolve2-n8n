@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <title>Agent Prompt 設定</title>
+  <link rel="stylesheet" href="/styles.css" />
+  <style>
+    .prompt-block {
+      border: 1px solid #ddd;
+      padding: 12px;
+      margin-bottom: 16px;
+      border-radius: 4px;
+      background: #fff;
+    }
+    .prompt-warning {
+      color: #b45309;
+      font-size: 0.9rem;
+      margin-bottom: 12px;
+    }
+    textarea {
+      font-family: monospace;
+      font-size: 0.9rem;
+    }
+    /* Profile status banner */
+    #profile-status-banner {
+      padding: 10px 16px;
+      margin-bottom: 16px;
+      border-radius: 4px;
+      font-weight: bold;
+    }
+    #profile-status-banner.default {
+      background: #d1fae5;
+      color: #065f46;
+    }
+    #profile-status-banner.custom {
+      background: #fef3c7;
+      color: #92400e;
+    }
+    #profile-status-banner.profile {
+      background: #dbeafe;
+      color: #1e40af;
+    }
+    /* Profile management section */
+    #profile-section {
+      border: 1px solid #ddd;
+      padding: 16px;
+      margin-bottom: 20px;
+      border-radius: 4px;
+      background: #f9fafb;
+    }
+    #profile-section h3 {
+      margin-top: 0;
+      margin-bottom: 12px;
+    }
+    .profile-row {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 12px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .profile-row select,
+    .profile-row input {
+      padding: 6px 10px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+    .profile-row button {
+      padding: 6px 12px;
+    }
+    #profile-list {
+      margin-top: 12px;
+    }
+    .profile-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 12px;
+      background: #fff;
+      border: 1px solid #e5e7eb;
+      border-radius: 4px;
+      margin-bottom: 6px;
+    }
+    .profile-item span {
+      font-weight: 500;
+    }
+    .profile-item small {
+      color: #6b7280;
+      margin-left: 8px;
+    }
+    .profile-item-actions {
+      display: flex;
+      gap: 6px;
+    }
+    .profile-item-actions button {
+      padding: 4px 8px;
+      font-size: 0.85rem;
+    }
+    /* Category sections */
+    .prompt-category {
+      margin-bottom: 24px;
+    }
+    .prompt-category h3 {
+      background: #374151;
+      color: #fff;
+      padding: 10px 16px;
+      margin: 0 0 12px 0;
+      border-radius: 4px;
+    }
+    .prompt-category h3.system-msg {
+      background: #1e40af;
+    }
+    .prompt-category h3.template {
+      background: #065f46;
+    }
+    .placeholder-hint {
+      font-size: 0.85rem;
+      color: #6b7280;
+      margin-bottom: 8px;
+      background: #f3f4f6;
+      padding: 6px 10px;
+      border-radius: 4px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Agent Prompt 設定 (15 個)</h1>
+
+  <!-- Active Profile Banner -->
+  <div id="profile-status-banner" class="default">
+    目前使用: <span id="active-profile-name">default</span>
+  </div>
+
+  <!-- Profile Management Section -->
+  <div id="profile-section">
+    <h3>Profile 管理</h3>
+    <div class="profile-row">
+      <button id="btn-reset-default">恢復預設值</button>
+      <input type="text" id="new-profile-name" placeholder="新 Profile 名稱" />
+      <button id="btn-save-profile">儲存目前設定為 Profile</button>
+    </div>
+    <div id="profile-list">
+      <!-- dynamically populated -->
+    </div>
+  </div>
+
+  <p class="prompt-warning">
+    ⚠️ 請勿刪除大段結構與格式（例如項目編號、JSON/Markdown 標記、<code>{{placeholder}}</code> 變數等），只建議調整敘述、語氣與說明文字。修改不當可能導致分析結果異常。
+  </p>
+
+  <div id="prompt-list"></div>
+
+  <button id="back-btn">回到分析頁面</button>
+
+  <script src="/prompts.js"></script>
+</body>
+</html>

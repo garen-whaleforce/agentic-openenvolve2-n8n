@@ -1,0 +1,26 @@
+# Core dependencies
+accelerate
+fastapi
+httpx>=0.25.0
+langchain-openai
+neo4j
+numpy
+openai>=1.0.0
+pandas
+python-dotenv
+scikit-learn
+torch==2.3.1+cpu
+transformers
+tqdm
+uvicorn[standard]
+pydantic>=2.0.0
+
+# Database
+psycopg2-binary
+redis>=5.0.0
+
+# Whaleforce Services Integration
+boto3>=1.28.0  # For MinIO S3-compatible storage
+
+# Optional: Azure OpenAI support
+# azure-identity

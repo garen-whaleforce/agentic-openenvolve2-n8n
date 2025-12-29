@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Earnings Call 詳情</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="hero">
+        <p class="eyebrow">WHALEFORCE · AI · AGENTIC RAG</p>
+        <h1 id="title">載入中...</h1>
+        <p class="muted small">
+          <a class="link-light" href="calls.html">← 回列表</a>
+        </p>
+      </header>
+
+      <section class="panel card-full">
+        <div class="info-kpi-grid">
+          <div>
+            <h3>基礎資訊</h3>
+            <div class="meta meta-split">
+              <div class="meta-col">
+                <div><span class="label">Symbol</span><span id="meta-symbol">-</span></div>
+                <div><span class="label">Company</span><span id="meta-company">-</span></div>
+                <div><span class="label">Sector</span><span id="meta-sector">-</span></div>
+              </div>
+              <div class="meta-col">
+                <div><span class="label">Fiscal</span><span id="meta-fiscal">-</span></div>
+                <div><span class="label">Calendar</span><span id="meta-calendar">-</span></div>
+                <div><span class="label">Transcript Date</span><span id="meta-date">-</span></div>
+              </div>
+            </div>
+          </div>
+          <div>
+            <h3>總覽 KPI</h3>
+            <div class="kpi-grid">
+              <div class="kpi-card">
+                <span class="label">Prediction</span>
+                <div id="kpi-pred" class="kpi-value">-</div>
+              </div>
+              <div class="kpi-card">
+                <span class="label">Confidence</span>
+                <div id="kpi-conf" class="kpi-value">-</div>
+              </div>
+              <div class="kpi-card">
+                <span class="label">Post Return (3D)</span>
+                <div id="kpi-return" class="kpi-value">-</div>
+              </div>
+              <div class="kpi-card">
+                <span class="label">Token / Cost</span>
+                <div id="kpi-cost" class="kpi-value small">-</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel card-full">
+        <h3>Agentic RAG 結果</h3>
+        <div id="agentic-content" class="agentic">
+          <p class="muted">載入中...</p>
+        </div>
+      </section>
+
+      <section class="panel card-full detail-list">
+        <div class="detail-card">
+          <button class="detail-toggle" type="button" aria-expanded="false" data-target="detail-cmp">
+            <div>
+              <h3>Comparative Agent</h3>
+              <p id="detail-cmp-summary" class="muted small">尚無資料</p>
+            </div>
+            <span class="chevron">▼</span>
+          </button>
+          <div id="detail-cmp" class="detail-body" hidden>尚無資料</div>
+        </div>
+        <div class="detail-card">
+          <button class="detail-toggle" type="button" aria-expanded="false" data-target="detail-hist">
+            <div>
+              <h3>Historical Earnings</h3>
+              <p id="detail-hist-summary" class="muted small">尚無資料</p>
+            </div>
+            <span class="chevron">▼</span>
+          </button>
+          <div id="detail-hist" class="detail-body" hidden>尚無資料</div>
+        </div>
+        <div class="detail-card">
+          <button class="detail-toggle" type="button" aria-expanded="false" data-target="detail-perf">
+            <div>
+              <h3>Historical Performance</h3>
+              <p id="detail-perf-summary" class="muted small">尚無資料</p>
+            </div>
+            <span class="chevron">▼</span>
+          </button>
+          <div id="detail-perf" class="detail-body" hidden>尚無資料</div>
+        </div>
+        <div class="detail-card">
+          <button class="detail-toggle" type="button" aria-expanded="false" data-target="detail-baseline">
+            <div>
+              <h3>Baseline / Sentiment</h3>
+              <p id="detail-baseline-summary" class="muted small">預留</p>
+            </div>
+            <span class="chevron">▼</span>
+          </button>
+          <div id="detail-baseline" class="detail-body" hidden>預留</div>
+        </div>
+        <div class="detail-card">
+          <button class="detail-toggle" type="button" aria-expanded="false" data-target="detail-tokens">
+            <div>
+              <h3>Token & 成本</h3>
+              <p id="detail-tokens-summary" class="muted small">-</p>
+            </div>
+            <span class="chevron">▼</span>
+          </button>
+          <div id="detail-tokens" class="detail-body" hidden>-</div>
+        </div>
+      </section>
+
+      <section class="panel collapsible">
+        <button class="collapse-toggle" type="button" aria-expanded="false" aria-controls="raw-json">
+          <span>除錯用 JSON</span>
+          <span class="chevron">▼</span>
+        </button>
+        <div id="debug-json-wrap" class="collapse-body" hidden>
+          <pre id="raw-json" class="debug-block">{}</pre>
+        </div>
+      </section>
+    </div>
+    <script src="call_detail.js"></script>
+  </body>
+</html>

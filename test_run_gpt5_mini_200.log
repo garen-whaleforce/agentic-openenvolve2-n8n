@@ -1,0 +1,192 @@
+================================================================================
+2024 Top Movers Analysis Pipeline Test
+================================================================================
+Start time: 2025-12-28 23:24:24
+Mode: FULL (200 samples)
+Concurrency: 5 workers
+Models: main=gpt-5-mini, helper=gpt-4o-mini
+
+Fetching top movers from 2024...
+2025-12-28 23:24:26 [INFO] pg_client: PostgreSQL connection pool initialized (min=5, max=30)
+Found 100 top gainers and 100 top losers
+
+Total samples to process: 200
+
+Top 5 Gainers:
+  SMCI 2024-Q2 (Supermicro): +139.68%
+  APP 2024-Q3 (AppLovin Corporation): +102.31%
+  APP 2024-Q2 (AppLovin Corporation): +87.66%
+  TSLA 2024-Q3 (Tesla, Inc.): +82.18%
+  PLTR 2024-Q3 (Palantir Technologies): +72.69%
+
+Top 5 Losers:
+  TTD 2024-Q4 (The Trade Desk, Inc.): -54.31%
+  MRNA 2024-Q2 (Moderna): -42.73%
+  COIN 2024-Q4 (Coinbase Global): -42.23%
+  EPAM 2024-Q4 (EPAM Systems): -39.73%
+  XYZ 2024-Q4 (Block, Inc.): -39.48%
+
+--------------------------------------------------------------------------------
+Running analyses...
+--------------------------------------------------------------------------------
+
+🚀 Running with 5 concurrent workers...
+2025-12-28 23:24:30 [INFO] fmp_client: PostgreSQL DB enabled as primary data source
+[DEBUG] CompareWithPeers bucket size before helper: 16
+[DEBUG] CompareWithPeers bucket size after helper: 16
+[DEBUG] CompareWithPeers bucket size before helper: 26
+[DEBUG] CompareWithPeers bucket size before helper: 58
+[DEBUG] CompareWithPeers bucket size after helper: 26
+[DEBUG] CompareWithPeers bucket size before helper: 11
+2025-12-28 23:26:17 [WARNING] redis_cache: Redis SETEX failed for key call:APP:2024:Q2: Error 61 connecting to 172.23.22.100:6379. Connect call failed ('172.23.22.100', 6379).
+  [1/200] ✓ APP 2024-Q2 (GAINER) | Pred: UP (0.70) | Actual: +87.66% | Hit: ✓ | 106.8s
+[DEBUG] CompareWithPeers bucket size after helper: 58
+[DEBUG] CompareWithPeers bucket size after helper: 11
+2025-12-28 23:26:28 [WARNING] redis_cache: Redis SETEX failed for key call:APP:2024:Q3: Error 61 connecting to 172.23.22.100:6379. Connect call failed ('172.23.22.100', 6379).
+  [2/200] ✓ APP 2024-Q3 (GAINER) | Pred: UP (0.80) | Actual: +102.31% | Hit: ✓ | 117.4s
+2025-12-28 23:26:33 [WARNING] redis_cache: Redis SETEX failed for key call:TSLA:2024:Q3: Error 61 connecting to 172.23.22.100:6379. Connect call failed ('172.23.22.100', 6379).
+  [3/200] ✓ TSLA 2024-Q3 (GAINER) | Pred: DOWN (0.40) | Actual: +82.18% | Hit: ✗ | 122.7s
+[DEBUG] CompareWithPeers bucket size before helper: 26
+2025-12-28 23:26:36 [WARNING] redis_cache: Redis SETEX failed for key call:SMCI:2024:Q2: Error 61 connecting to 172.23.22.100:6379. Connect call failed ('172.23.22.100', 6379).
+  [4/200] ✓ SMCI 2024-Q2 (GAINER) | Pred: UP (0.60) | Actual: +139.68% | Hit: ✓ | 126.2s
+[DEBUG] CompareWithPeers bucket size after helper: 26
+2025-12-28 23:27:48 [WARNING] redis_cache: Redis SETEX failed for key call:PLTR:2024:Q3: Error 61 connecting to 172.23.22.100:6379. Connect call failed ('172.23.22.100', 6379).
+  [5/200] ✓ PLTR 2024-Q3 (GAINER) | Pred: UP (0.80) | Actual: +72.69% | Hit: ✓ | 197.5s
+[DEBUG] CompareWithPeers bucket size before helper: 35
+[DEBUG] CompareWithPeers bucket size before helper: 25
+[DEBUG] CompareWithPeers bucket size after helper: 35
+[DEBUG] CompareWithPeers bucket size after helper: 25
+[DEBUG] CompareWithPeers bucket size before helper: 9
+2025-12-28 23:28:20 [WARNING] redis_cache: Redis SETEX failed for key call:UAL:2024:Q3: Error 61 connecting to 172.23.22.100:6379. Connect call failed ('172.23.22.100', 6379).
+  [6/200] ✓ UAL 2024-Q3 (GAINER) | Pred: UP (0.60) | Actual: +50.43% | Hit: ✓ | 106.7s
+[DEBUG] CompareWithPeers bucket size before helper: 35
+[DEBUG] CompareWithPeers bucket size after helper: 9
+2025-12-28 23:28:25 [WARNING] redis_cache: Redis SETEX failed for key call:PLTR:2024:Q2: Error 61 connecting to 172.23.22.100:6379. Connect call failed ('172.23.22.100', 6379).
+  [7/200] ✓ PLTR 2024-Q2 (GAINER) | Pred: UP (0.70) | Actual: +51.02% | Hit: ✓ | 117.1s
+[DEBUG] CompareWithPeers bucket size after helper: 35
+2025-12-28 23:28:54 [WARNING] redis_cache: Redis SETEX failed for key call:COIN:2024:Q3: Error 61 connecting to 172.23.22.100:6379. Connect call failed ('172.23.22.100', 6379).
+  [8/200] ✓ COIN 2024-Q3 (GAINER) | Pred: DOWN (0.30) | Actual: +46.68% | Hit: ✗ | 137.2s
+2025-12-28 23:29:20 [WARNING] redis_cache: Redis SETEX failed for key call:FSLR:2024:Q1: Error 61 connecting to 172.23.22.100:6379. Connect call failed ('172.23.22.100', 6379).
+  [9/200] ✓ FSLR 2024-Q1 (GAINER) | Pred: UP (0.60) | Actual: +54.08% | Hit: ✓ | 182.9s
+[DEBUG] CompareWithPeers bucket size before helper: 55
+[DEBUG] CompareWithPeers bucket size after helper: 55
+2025-12-28 23:29:38 [WARNING] redis_cache: Redis SETEX failed for key call:WSM:2024:Q3: Error 61 connecting to 172.23.22.100:6379. Connect call failed ('172.23.22.100', 6379).
+  [10/200] ✓ WSM 2024-Q3 (GAINER) | Pred: NEUTRAL (0.50) | Actual: +45.96% | Hit: ✗ | 109.9s
+[DEBUG] CompareWithPeers bucket size before helper: 50
+[DEBUG] CompareWithPeers bucket size after helper: 50
+[DEBUG] CompareWithPeers bucket size before helper: 47
+2025-12-28 23:30:15 [WARNING] redis_cache: Redis SETEX failed for key call:VST:2024:Q2: Error 61 connecting to 172.23.22.100:6379. Connect call failed ('172.23.22.100', 6379).
+  [11/200] ✓ VST 2024-Q2 (GAINER) | Pred: UP (0.60) | Actual: +45.88% | Hit: ✓ | 115.4s
+[DEBUG] CompareWithPeers bucket size after helper: 47
+2025-12-28 23:30:38 [WARNING] redis_cache: Redis SETEX failed for key call:DECK:2024:Q2: Error 61 connecting to 172.23.22.100:6379. Connect call failed ('172.23.22.100', 6379).
+  [12/200] ✓ DECK 2024-Q2 (GAINER) | Pred: UP (0.70) | Actual: +44.02% | Hit: ✓ | 133.5s
+[DEBUG] CompareWithPeers bucket size before helper: 34
+[DEBUG] CompareWithPeers bucket size after helper: 34
+[DEBUG] CompareWithPeers bucket size before helper: 20
+[DEBUG] CompareWithPeers bucket size before helper: 21
+[DEBUG] CompareWithPeers bucket size after helper: 20
+[DEBUG] CompareWithPeers bucket size after helper: 21
+2025-12-28 23:30:58 [WARNING] redis_cache: Redis SETEX failed for key call:HOOD:2024:Q3: Error 61 connecting to 172.23.22.100:6379. Connect call failed ('172.23.22.100', 6379).
+  [13/200] ✓ HOOD 2024-Q3 (GAINER) | Pred: UP (0.60) | Actual: +42.50% | Hit: ✓ | 124.3s
+2025-12-28 23:31:12 [WARNING] redis_cache: Redis SETEX failed for key call:NVDA:2024:Q1: Error 61 connecting to 172.23.22.100:6379. Connect call failed ('172.23.22.100', 6379).
+  [14/200] ✓ NVDA 2024-Q1 (GAINER) | Pred: UP (0.70) | Actual: +38.87% | Hit: ✓ | 94.6s
+2025-12-28 23:31:39 [WARNING] redis_cache: Redis SETEX failed for key call:TER:2024:Q1: Error 61 connecting to 172.23.22.100:6379. Connect call failed ('172.23.22.100', 6379).
+  [15/200] ✓ TER 2024-Q1 (GAINER) | Pred: NEUTRAL (0.50) | Actual: +39.92% | Hit: ✗ | 138.7s
+[DEBUG] CompareWithPeers bucket size before helper: 33
+[DEBUG] CompareWithPeers bucket size after helper: 33
+2025-12-28 23:32:17 [WARNING] redis_cache: Redis SETEX failed for key call:K:2024:Q2: Error 61 connecting to 172.23.22.100:6379. Connect call failed ('172.23.22.100', 6379).
+  [16/200] ✓ K 2024-Q2 (GAINER) | Pred: UP (0.60) | Actual: +38.74% | Hit: ✓ | 122.2s
+[DEBUG] CompareWithPeers bucket size before helper: 31
+[DEBUG] CompareWithPeers bucket size after helper: 31
+[DEBUG] CompareWithPeers bucket size before helper: 31
+[DEBUG] CompareWithPeers bucket size after helper: 31
+2025-12-28 23:32:46 [WARNING] redis_cache: Redis SETEX failed for key call:PAYC:2024:Q3: Error 61 connecting to 172.23.22.100:6379. Connect call failed ('172.23.22.100', 6379).
+  [17/200] ✓ PAYC 2024-Q3 (GAINER) | Pred: UP (0.60) | Actual: +36.14% | Hit: ✓ | 127.6s
+2025-12-28 23:32:53 [WARNING] redis_cache: Redis SETEX failed for key call:FTNT:2024:Q2: Error 61 connecting to 172.23.22.100:6379. Connect call failed ('172.23.22.100', 6379).
+  [18/200] ✓ FTNT 2024-Q2 (GAINER) | Pred: NEUTRAL (0.50) | Actual: +35.57% | Hit: ✗ | 114.7s
+[DEBUG] CompareWithPeers bucket size before helper: 46
+[DEBUG] CompareWithPeers bucket size after helper: 46
+[DEBUG] CompareWithPeers bucket size before helper: 45
+[DEBUG] CompareWithPeers bucket size after helper: 45
+2025-12-28 23:33:29 [WARNING] redis_cache: Redis SETEX failed for key call:TPR:2024:Q1: Error 61 connecting to 172.23.22.100:6379. Connect call failed ('172.23.22.100', 6379).
+  [19/200] ✓ TPR 2024-Q1 (GAINER) | Pred: UP (0.60) | Actual: +34.92% | Hit: ✓ | 136.7s
+2025-12-28 23:33:35 [WARNING] redis_cache: Redis SETEX failed for key call:CRWD:2024:Q3: Error 61 connecting to 172.23.22.100:6379. Connect call failed ('172.23.22.100', 6379).
+  [20/200] ✓ CRWD 2024-Q3 (GAINER) | Pred: UP (0.70) | Actual: +33.44% | Hit: ✓ | 116.1s
+
+--- Interim Summary (1 completed) ---
+Success: 1 | Failed: 0
+Overall Hit Rate: 1/1 = 100.0%
+  Gainers: 1/1 = 100.0%
+Avg time: 116.1s | Total time: 116.1s
+[DEBUG] CompareWithPeers bucket size before helper: 8
+[DEBUG] CompareWithPeers bucket size after helper: 8
+[DEBUG] CompareWithPeers bucket size before helper: 39
+[DEBUG] CompareWithPeers bucket size after helper: 39
+2025-12-28 23:34:09 [WARNING] redis_cache: Redis SETEX failed for key call:TPL:2024:Q1: Error 61 connecting to 172.23.22.100:6379. Connect call failed ('172.23.22.100', 6379).
+  [21/200] ✓ TPL 2024-Q1 (GAINER) | Pred: UP (0.60) | Actual: +32.69% | Hit: ✓ | 83.1s
+[DEBUG] CompareWithPeers bucket size before helper: 26
+[DEBUG] CompareWithPeers bucket size after helper: 26
+2025-12-28 23:34:30 [WARNING] redis_cache: Redis SETEX failed for key call:AXON:2024:Q3: Error 61 connecting to 172.23.22.100:6379. Connect call failed ('172.23.22.100', 6379).
+  [22/200] ✓ AXON 2024-Q3 (GAINER) | Pred: UP (0.60) | Actual: +33.15% | Hit: ✓ | 132.5s
+2025-12-28 23:34:39 [WARNING] redis_cache: Redis SETEX failed for key call:CCL:2024:Q3: Error 61 connecting to 172.23.22.100:6379. Connect call failed ('172.23.22.100', 6379).
+  [23/200] ✓ CCL 2024-Q3 (GAINER) | Pred: UP (0.70) | Actual: +32.69% | Hit: ✓ | 106.7s
+[DEBUG] CompareWithPeers bucket size before helper: 17
+[DEBUG] CompareWithPeers bucket size after helper: 17
+2025-12-28 23:35:28 [WARNING] redis_cache: Redis SETEX failed for key call:AXON:2024:Q2: Error 61 connecting to 172.23.22.100:6379. Connect call failed ('172.23.22.100', 6379).
+  [24/200] ✓ AXON 2024-Q2 (GAINER) | Pred: UP (0.60) | Actual: +32.12% | Hit: ✓ | 113.3s
+[DEBUG] CompareWithPeers bucket size before helper: 31
+[DEBUG] CompareWithPeers bucket size after helper: 31
+2025-12-28 23:35:59 [WARNING] redis_cache: Redis SETEX failed for key call:HOOD:2024:Q2: Error 61 connecting to 172.23.22.100:6379. Connect call failed ('172.23.22.100', 6379).
+  [25/200] ✓ HOOD 2024-Q2 (GAINER) | Pred: UP (0.70) | Actual: +32.54% | Hit: ✓ | 150.0s
+[DEBUG] CompareWithPeers bucket size before helper: 46
+[DEBUG] CompareWithPeers bucket size after helper: 46
+[DEBUG] CompareWithPeers bucket size before helper: 26
+[DEBUG] CompareWithPeers bucket size before helper: 9
+[DEBUG] CompareWithPeers bucket size after helper: 26
+[DEBUG] CompareWithPeers bucket size after helper: 9
+2025-12-28 23:36:27 [WARNING] redis_cache: Redis SETEX failed for key call:WFC:2024:Q3: Error 61 connecting to 172.23.22.100:6379. Connect call failed ('172.23.22.100', 6379).
+  [26/200] ✓ WFC 2024-Q3 (GAINER) | Pred: DOWN (0.40) | Actual: +31.53% | Hit: ✗ | 138.2s
+2025-12-28 23:36:34 [WARNING] redis_cache: Redis SETEX failed for key call:IP:2024:Q1: Error 61 connecting to 172.23.22.100:6379. Connect call failed ('172.23.22.100', 6379).
+  [27/200] ✓ IP 2024-Q1 (GAINER) | Pred: NEUTRAL (0.50) | Actual: +31.31% | Hit: ✗ | 124.0s
+2025-12-28 23:36:36 [WARNING] redis_cache: Redis SETEX failed for key call:QCOM:2024:Q2: Error 61 connecting to 172.23.22.100:6379. Connect call failed ('172.23.22.100', 6379).
+  [28/200] ✓ QCOM 2024-Q2 (GAINER) | Pred: UP (0.60) | Actual: +31.21% | Hit: ✓ | 116.3s
+[DEBUG] CompareWithPeers bucket size before helper: 15
+[DEBUG] CompareWithPeers bucket size after helper: 15
+2025-12-28 23:37:17 [WARNING] redis_cache: Redis SETEX failed for key call:RL:2024:Q2: Error 61 connecting to 172.23.22.100:6379. Connect call failed ('172.23.22.100', 6379).
+  [29/200] ✓ RL 2024-Q2 (GAINER) | Pred: UP (0.60) | Actual: +31.07% | Hit: ✓ | 109.3s
+[DEBUG] CompareWithPeers bucket size before helper: 26
+[DEBUG] CompareWithPeers bucket size after helper: 26
+2025-12-28 23:37:59 [WARNING] redis_cache: Redis SETEX failed for key call:SBUX:2024:Q3: Error 61 connecting to 172.23.22.100:6379. Connect call failed ('172.23.22.100', 6379).
+  [30/200] ✓ SBUX 2024-Q3 (GAINER) | Pred: NEUTRAL (0.50) | Actual: +30.73% | Hit: ✗ | 119.8s
+[DEBUG] CompareWithPeers bucket size before helper: 9
+[DEBUG] CompareWithPeers bucket size before helper: 17
+[DEBUG] CompareWithPeers bucket size before helper: 19
+[DEBUG] CompareWithPeers bucket size after helper: 9
+[DEBUG] CompareWithPeers bucket size after helper: 17
+[DEBUG] CompareWithPeers bucket size after helper: 19
+2025-12-28 23:38:25 [WARNING] redis_cache: Redis SETEX failed for key call:NFLX:2024:Q3: Error 61 connecting to 172.23.22.100:6379. Connect call failed ('172.23.22.100', 6379).
+  [31/200] ✓ NFLX 2024-Q3 (GAINER) | Pred: UP (0.60) | Actual: +30.54% | Hit: ✓ | 111.7s
+2025-12-28 23:38:26 [WARNING] redis_cache: Redis SETEX failed for key call:TECH:2024:Q1: Error 61 connecting to 172.23.22.100:6379. Connect call failed ('172.23.22.100', 6379).
+  [32/200] ✓ TECH 2024-Q1 (GAINER) | Pred: DOWN (0.20) | Actual: +30.65% | Hit: ✗ | 118.9s
+2025-12-28 23:38:35 [WARNING] redis_cache: Redis SETEX failed for key call:NVDA:2024:Q4: Error 61 connecting to 172.23.22.100:6379. Connect call failed ('172.23.22.100', 6379).
+  [33/200] ✓ NVDA 2024-Q4 (GAINER) | Pred: UP (0.70) | Actual: +30.44% | Hit: ✓ | 119.1s
+[DEBUG] CompareWithPeers bucket size before helper: 40
+[DEBUG] CompareWithPeers bucket size after helper: 40
+2025-12-28 23:39:01 [WARNING] redis_cache: Redis SETEX failed for key call:BLDR:2024:Q2: Error 61 connecting to 172.23.22.100:6379. Connect call failed ('172.23.22.100', 6379).
+  [34/200] ✓ BLDR 2024-Q2 (GAINER) | Pred: DOWN (0.40) | Actual: +29.98% | Hit: ✗ | 103.7s
+[DEBUG] CompareWithPeers bucket size before helper: 18
+[DEBUG] CompareWithPeers bucket size before helper: 9
+[DEBUG] CompareWithPeers bucket size after helper: 18
+[DEBUG] CompareWithPeers bucket size after helper: 9
+2025-12-28 23:40:11 [WARNING] redis_cache: Redis SETEX failed for key call:INTC:2024:Q4: Error 61 connecting to 172.23.22.100:6379. Connect call failed ('172.23.22.100', 6379).
+  [35/200] ✓ INTC 2024-Q4 (GAINER) | Pred: DOWN (0.20) | Actual: +28.39% | Hit: ✗ | 105.3s
+[DEBUG] CompareWithPeers bucket size before helper: 48
+2025-12-28 23:40:14 [WARNING] redis_cache: Redis SETEX failed for key call:GRMN:2024:Q3: Error 61 connecting to 172.23.22.100:6379. Connect call failed ('172.23.22.100', 6379).
+  [36/200] ✓ GRMN 2024-Q3 (GAINER) | Pred: UP (0.60) | Actual: +29.89% | Hit: ✓ | 135.2s
+[DEBUG] CompareWithPeers bucket size after helper: 48
+2025-12-28 23:40:31 [WARNING] redis_cache: Redis SETEX failed for key call:ERIE:2024:Q2: Error 61 connecting to 172.23.22.100:6379. Connect call failed ('172.23.22.100', 6379).
+  [37/200] ✓ ERIE 2024-Q2 (GAINER) | Pred: UP (0.60) | Actual: +29.85% | Hit: ✓ | 125.7s
+[DEBUG] CompareWithPeers bucket size before helper: 41
+[DEBUG] CompareWithPeers bucket size after helper: 41
+[DEBUG] CompareWithPeers bucket size before helper: 49
+[DEBUG] CompareWithPeers bucket size after helper: 49

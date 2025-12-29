@@ -1,0 +1,10 @@
+symbol,year,quarter,category,company_name,sector,success,error,time_seconds,prediction,confidence,direction_score,actual_return_30d_pct,correct,trade_long,summary
+HAL,2024,4,LOSER,Halliburton,Energy,True,,87.5786190032959,DOWN,0.3,,0.0834018077239113,False,False,"Overall I expect HAL shares to drift modestly lower over the next 30 trading days. The call showed clear near-term headwinds — management flagged an expected decrease in North American revenue and sequential margin pressure (C&P margin down to 20%), plus a higher effective tax rate and SAP costs — only partly offset by strong cash generation and a $1B buyback plus $600M of dividends.
+
+**Summary: The single most important 30D driver is management's explicit guidance and commentary expecting a dec"
+XYL,2023,2,LOSER,Xylem Inc.,Industrials,True,,83.84449410438538,UP,0.8,,0.11933931306059939,True,False,"I view the call as net-positive for the next 30 trading days because management raised top-line and organic-growth guidance and reported strong revenue and EPS momentum, while backlog expansion provides visible near-term revenue. That said, recent negative operating cash flow and absent free cash flow in recent quarters are a material offset that reduces conviction.
+
+**Summary: The single most important 30D driver is management’s upgraded revenue and organic-growth guidance (organic growth raise"
+TSLA,2022,3,LOSER,"Tesla, Inc.",Consumer Cyclical,True,,67.28812098503113,UP,0.6,,0.29520295202952024,True,False,"The company reported materially stronger fundamentals — ~17% operating margin, ~28% automotive gross margin, record vehicle production/deliveries and >$3B free cash flow — which should support positive investor sentiment and a modest rally over the next 30 trading days. That upside is limited by execution uncertainty around new factory ramps, potential near-term costs from expansion, and the fact that buybacks and product catalysts were discussed but not concretely committed.
+
+**Summary: The pri"

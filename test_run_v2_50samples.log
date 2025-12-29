@@ -1,0 +1,262 @@
+2025-12-29 19:51:08 [INFO] pg_client: PostgreSQL connection pool initialized (min=5, max=30)
+2025-12-29 19:51:13 [INFO] fmp_client: PostgreSQL DB enabled as primary data source
+2025-12-29 19:52:36 [WARNING] redis_cache: Redis SETEX failed for key call:TSLA:2024:Q3: Error 61 connecting to 172.23.22.100:6379. Connect call failed ('172.23.22.100', 6379).
+2025-12-29 19:52:38 [WARNING] redis_cache: Redis SETEX failed for key call:APP:2024:Q3: Error 61 connecting to 172.23.22.100:6379. Connect call failed ('172.23.22.100', 6379).
+2025-12-29 19:52:41 [WARNING] redis_cache: Redis SETEX failed for key call:PLTR:2024:Q3: Error 61 connecting to 172.23.22.100:6379. Connect call failed ('172.23.22.100', 6379).
+2025-12-29 19:52:44 [WARNING] redis_cache: Redis SETEX failed for key call:SMCI:2024:Q2: Error 61 connecting to 172.23.22.100:6379. Connect call failed ('172.23.22.100', 6379).
+2025-12-29 19:52:47 [WARNING] redis_cache: Redis SETEX failed for key call:APP:2024:Q2: Error 61 connecting to 172.23.22.100:6379. Connect call failed ('172.23.22.100', 6379).
+2025-12-29 19:54:52 [WARNING] redis_cache: Redis SETEX failed for key call:UAL:2024:Q3: Error 61 connecting to 172.23.22.100:6379. Connect call failed ('172.23.22.100', 6379).
+2025-12-29 19:54:55 [WARNING] redis_cache: Redis SETEX failed for key call:PLTR:2024:Q2: Error 61 connecting to 172.23.22.100:6379. Connect call failed ('172.23.22.100', 6379).
+2025-12-29 19:54:56 [WARNING] redis_cache: Redis SETEX failed for key call:COIN:2024:Q3: Error 61 connecting to 172.23.22.100:6379. Connect call failed ('172.23.22.100', 6379).
+2025-12-29 19:54:56 [WARNING] redis_cache: Redis SETEX failed for key call:FSLR:2024:Q1: Error 61 connecting to 172.23.22.100:6379. Connect call failed ('172.23.22.100', 6379).
+2025-12-29 19:55:08 [WARNING] redis_cache: Redis SETEX failed for key call:WSM:2024:Q3: Error 61 connecting to 172.23.22.100:6379. Connect call failed ('172.23.22.100', 6379).
+2025-12-29 19:56:15 [WARNING] redis_cache: Redis SETEX failed for key call:TER:2024:Q1: Error 61 connecting to 172.23.22.100:6379. Connect call failed ('172.23.22.100', 6379).
+2025-12-29 19:56:18 [WARNING] redis_cache: Redis SETEX failed for key call:DECK:2024:Q2: Error 61 connecting to 172.23.22.100:6379. Connect call failed ('172.23.22.100', 6379).
+2025-12-29 19:56:19 [WARNING] redis_cache: Redis SETEX failed for key call:VST:2024:Q2: Error 61 connecting to 172.23.22.100:6379. Connect call failed ('172.23.22.100', 6379).
+2025-12-29 19:56:35 [WARNING] redis_cache: Redis SETEX failed for key call:NVDA:2024:Q1: Error 61 connecting to 172.23.22.100:6379. Connect call failed ('172.23.22.100', 6379).
+2025-12-29 19:56:35 [WARNING] redis_cache: Redis SETEX failed for key call:HOOD:2024:Q3: Error 61 connecting to 172.23.22.100:6379. Connect call failed ('172.23.22.100', 6379).
+2025-12-29 19:57:16 [WARNING] redis_cache: Redis SETEX failed for key call:K:2024:Q2: Error 61 connecting to 172.23.22.100:6379. Connect call failed ('172.23.22.100', 6379).
+2025-12-29 19:57:36 [WARNING] redis_cache: Redis SETEX failed for key call:PAYC:2024:Q3: Error 61 connecting to 172.23.22.100:6379. Connect call failed ('172.23.22.100', 6379).
+2025-12-29 19:57:52 [WARNING] redis_cache: Redis SETEX failed for key call:FTNT:2024:Q2: Error 61 connecting to 172.23.22.100:6379. Connect call failed ('172.23.22.100', 6379).
+2025-12-29 19:58:05 [WARNING] redis_cache: Redis SETEX failed for key call:CRWD:2024:Q3: Error 61 connecting to 172.23.22.100:6379. Connect call failed ('172.23.22.100', 6379).
+2025-12-29 19:58:07 [WARNING] redis_cache: Redis SETEX failed for key call:TPR:2024:Q1: Error 61 connecting to 172.23.22.100:6379. Connect call failed ('172.23.22.100', 6379).
+2025-12-29 19:58:38 [WARNING] redis_cache: Redis SETEX failed for key call:AXON:2024:Q3: Error 61 connecting to 172.23.22.100:6379. Connect call failed ('172.23.22.100', 6379).
+2025-12-29 19:59:14 [WARNING] redis_cache: Redis SETEX failed for key call:TPL:2024:Q1: Error 61 connecting to 172.23.22.100:6379. Connect call failed ('172.23.22.100', 6379).
+2025-12-29 19:59:24 [WARNING] redis_cache: Redis SETEX failed for key call:CCL:2024:Q3: Error 61 connecting to 172.23.22.100:6379. Connect call failed ('172.23.22.100', 6379).
+2025-12-29 19:59:33 [WARNING] redis_cache: Redis SETEX failed for key call:HOOD:2024:Q2: Error 61 connecting to 172.23.22.100:6379. Connect call failed ('172.23.22.100', 6379).
+2025-12-29 19:59:35 [WARNING] redis_cache: Redis SETEX failed for key call:AXON:2024:Q2: Error 61 connecting to 172.23.22.100:6379. Connect call failed ('172.23.22.100', 6379).
+2025-12-29 19:59:56 [WARNING] redis_cache: Redis SETEX failed for key call:TTD:2024:Q4: Error 61 connecting to 172.23.22.100:6379. Connect call failed ('172.23.22.100', 6379).
+2025-12-29 20:00:56 [WARNING] redis_cache: Redis SETEX failed for key call:MRNA:2024:Q2: Error 61 connecting to 172.23.22.100:6379. Connect call failed ('172.23.22.100', 6379).
+2025-12-29 20:01:06 [WARNING] redis_cache: Redis SETEX failed for key call:EPAM:2024:Q4: Error 61 connecting to 172.23.22.100:6379. Connect call failed ('172.23.22.100', 6379).
+2025-12-29 20:01:08 [WARNING] redis_cache: Redis SETEX failed for key call:COIN:2024:Q4: Error 61 connecting to 172.23.22.100:6379. Connect call failed ('172.23.22.100', 6379).
+2025-12-29 20:01:16 [WARNING] redis_cache: Redis SETEX failed for key call:XYZ:2024:Q4: Error 61 connecting to 172.23.22.100:6379. Connect call failed ('172.23.22.100', 6379).
+2025-12-29 20:01:27 [WARNING] redis_cache: Redis SETEX failed for key call:TSLA:2024:Q4: Error 61 connecting to 172.23.22.100:6379. Connect call failed ('172.23.22.100', 6379).
+2025-12-29 20:02:23 [WARNING] redis_cache: Redis SETEX failed for key call:VTRS:2024:Q4: Error 61 connecting to 172.23.22.100:6379. Connect call failed ('172.23.22.100', 6379).
+2025-12-29 20:02:32 [WARNING] redis_cache: Redis SETEX failed for key call:MU:2024:Q3: Error 61 connecting to 172.23.22.100:6379. Connect call failed ('172.23.22.100', 6379).
+2025-12-29 20:02:36 [WARNING] redis_cache: Redis SETEX failed for key call:DXCM:2024:Q2: Error 61 connecting to 172.23.22.100:6379. Connect call failed ('172.23.22.100', 6379).
+2025-12-29 20:02:41 [WARNING] redis_cache: Redis SETEX failed for key call:MPWR:2024:Q3: Error 61 connecting to 172.23.22.100:6379. Connect call failed ('172.23.22.100', 6379).
+2025-12-29 20:02:57 [WARNING] redis_cache: Redis SETEX failed for key call:APA:2024:Q4: Error 61 connecting to 172.23.22.100:6379. Connect call failed ('172.23.22.100', 6379).
+2025-12-29 20:03:44 [WARNING] redis_cache: Redis SETEX failed for key call:NCLH:2024:Q4: Error 61 connecting to 172.23.22.100:6379. Connect call failed ('172.23.22.100', 6379).
+2025-12-29 20:03:52 [WARNING] redis_cache: Redis SETEX failed for key call:DG:2024:Q2: Error 61 connecting to 172.23.22.100:6379. Connect call failed ('172.23.22.100', 6379).
+2025-12-29 20:04:04 [WARNING] redis_cache: Redis SETEX failed for key call:WST:2024:Q4: Error 61 connecting to 172.23.22.100:6379. Connect call failed ('172.23.22.100', 6379).
+2025-12-29 20:04:07 [WARNING] redis_cache: Redis SETEX failed for key call:DDOG:2024:Q4: Error 61 connecting to 172.23.22.100:6379. Connect call failed ('172.23.22.100', 6379).
+2025-12-29 20:04:16 [WARNING] redis_cache: Redis SETEX failed for key call:GEV:2024:Q4: Error 61 connecting to 172.23.22.100:6379. Connect call failed ('172.23.22.100', 6379).
+2025-12-29 20:05:03 [WARNING] redis_cache: Redis SETEX failed for key call:SMCI:2024:Q4: Error 61 connecting to 172.23.22.100:6379. Connect call failed ('172.23.22.100', 6379).
+2025-12-29 20:05:14 [WARNING] redis_cache: Redis SETEX failed for key call:TER:2024:Q4: Error 61 connecting to 172.23.22.100:6379. Connect call failed ('172.23.22.100', 6379).
+2025-12-29 20:05:29 [WARNING] redis_cache: Redis SETEX failed for key call:APP:2024:Q4: Error 61 connecting to 172.23.22.100:6379. Connect call failed ('172.23.22.100', 6379).
+2025-12-29 20:05:31 [WARNING] redis_cache: Redis SETEX failed for key call:KKR:2024:Q4: Error 61 connecting to 172.23.22.100:6379. Connect call failed ('172.23.22.100', 6379).
+2025-12-29 20:05:32 [WARNING] redis_cache: Redis SETEX failed for key call:NEM:2024:Q3: Error 61 connecting to 172.23.22.100:6379. Connect call failed ('172.23.22.100', 6379).
+2025-12-29 20:06:28 [WARNING] redis_cache: Redis SETEX failed for key call:INTC:2024:Q2: Error 61 connecting to 172.23.22.100:6379. Connect call failed ('172.23.22.100', 6379).
+2025-12-29 20:06:43 [WARNING] redis_cache: Redis SETEX failed for key call:BLDR:2024:Q1: Error 61 connecting to 172.23.22.100:6379. Connect call failed ('172.23.22.100', 6379).
+2025-12-29 20:06:51 [WARNING] redis_cache: Redis SETEX failed for key call:ANET:2024:Q4: Error 61 connecting to 172.23.22.100:6379. Connect call failed ('172.23.22.100', 6379).
+2025-12-29 20:07:00 [WARNING] redis_cache: Redis SETEX failed for key call:PANW:2024:Q2: Error 61 connecting to 172.23.22.100:6379. Connect call failed ('172.23.22.100', 6379).
+================================================================================
+2024 Top Movers Analysis Pipeline Test
+================================================================================
+Start time: 2025-12-29 19:51:07
+Mode: FULL (200 samples)
+Concurrency: 5 workers
+Models: main=gpt-5-mini, helper=gpt-4o-mini
+
+Fetching top movers from 2024...
+Found 100 top gainers and 100 top losers
+
+Total samples to process: 50
+
+Top 5 Gainers:
+  SMCI 2024-Q2 (Supermicro): +139.68%
+  APP 2024-Q3 (AppLovin Corporation): +102.31%
+  APP 2024-Q2 (AppLovin Corporation): +87.66%
+  TSLA 2024-Q3 (Tesla, Inc.): +82.18%
+  PLTR 2024-Q3 (Palantir Technologies): +72.69%
+
+Top 5 Losers:
+  TTD 2024-Q4 (The Trade Desk, Inc.): -54.31%
+  MRNA 2024-Q2 (Moderna): -42.73%
+  COIN 2024-Q4 (Coinbase Global): -42.23%
+  EPAM 2024-Q4 (EPAM Systems): -39.73%
+  XYZ 2024-Q4 (Block, Inc.): -39.48%
+
+--------------------------------------------------------------------------------
+Running analyses...
+--------------------------------------------------------------------------------
+
+🚀 Running with 5 concurrent workers...
+[DEBUG] CompareWithPeers bucket size before helper: 3
+[DEBUG] CompareWithPeers bucket size before helper: 4
+[DEBUG] CompareWithPeers bucket size after helper: 3
+[DEBUG] CompareWithPeers bucket size before helper: 4
+[DEBUG] CompareWithPeers bucket size after helper: 4
+[DEBUG] CompareWithPeers bucket size before helper: 2
+[DEBUG] CompareWithPeers bucket size after helper: 4
+[DEBUG] CompareWithPeers bucket size after helper: 2
+[DEBUG] CompareWithPeers bucket size before helper: 0
+[DEBUG] CompareWithPeers bucket size after helper: 0
+  [1/50] ✓ TSLA 2024-Q3 (GAINER) | Pred: UP (0.60) | Actual: +82.18% | Hit: ✓ | 83.6s
+  [2/50] ✓ APP 2024-Q3 (GAINER) | Pred: UP (0.60) | Actual: +102.31% | Hit: ✓ | 85.8s
+  [3/50] ✓ PLTR 2024-Q3 (GAINER) | Pred: UP (0.60) | Actual: +72.69% | Hit: ✓ | 88.6s
+  [4/50] ✓ SMCI 2024-Q2 (GAINER) | Pred: DOWN (0.40) | Actual: +139.68% | Hit: ✗ | 91.9s
+  [5/50] ✓ APP 2024-Q2 (GAINER) | Pred: UP (0.70) | Actual: +87.66% | Hit: ✓ | 94.4s
+[DEBUG] CompareWithPeers bucket size before helper: 3
+[DEBUG] CompareWithPeers bucket size after helper: 3
+[DEBUG] CompareWithPeers bucket size before helper: 3
+[DEBUG] CompareWithPeers bucket size before helper: 3
+[DEBUG] CompareWithPeers bucket size after helper: 3
+[DEBUG] CompareWithPeers bucket size after helper: 3
+[DEBUG] CompareWithPeers bucket size before helper: 0
+[DEBUG] CompareWithPeers bucket size after helper: 0
+[DEBUG] CompareWithPeers bucket size before helper: 0
+[DEBUG] CompareWithPeers bucket size after helper: 0
+  [6/50] ✓ UAL 2024-Q3 (GAINER) | Pred: DOWN (0.50) | Actual: +50.43% | Hit: ✗ | 131.1s
+  [7/50] ✓ PLTR 2024-Q2 (GAINER) | Pred: DOWN (0.50) | Actual: +51.02% | Hit: ✗ | 136.9s
+  [8/50] ✓ COIN 2024-Q3 (GAINER) | Pred: UP (0.60) | Actual: +46.68% | Hit: ✓ | 131.4s
+  [9/50] ✓ FSLR 2024-Q1 (GAINER) | Pred: DOWN (0.50) | Actual: +54.08% | Hit: ✗ | 140.3s
+  [10/50] ✓ WSM 2024-Q3 (GAINER) | Pred: DOWN (0.30) | Actual: +45.96% | Hit: ✗ | 140.6s
+[DEBUG] CompareWithPeers bucket size before helper: 4
+[DEBUG] CompareWithPeers bucket size after helper: 4
+[DEBUG] CompareWithPeers bucket size before helper: 0
+[DEBUG] CompareWithPeers bucket size after helper: 0
+[DEBUG] CompareWithPeers bucket size before helper: 2
+[DEBUG] CompareWithPeers bucket size before helper: 0
+[DEBUG] CompareWithPeers bucket size after helper: 0
+[DEBUG] CompareWithPeers bucket size after helper: 2
+[DEBUG] CompareWithPeers bucket size before helper: 2
+  [11/50] ✓ TER 2024-Q1 (GAINER) | Pred: DOWN (0.50) | Actual: +39.92% | Hit: ✗ | 78.9s
+  [12/50] ✓ DECK 2024-Q2 (GAINER) | Pred: DOWN (0.50) | Actual: +44.02% | Hit: ✗ | 82.8s
+  [13/50] ✓ VST 2024-Q2 (GAINER) | Pred: DOWN (0.50) | Actual: +45.88% | Hit: ✗ | 86.7s
+[DEBUG] CompareWithPeers bucket size after helper: 2
+  [14/50] ✓ NVDA 2024-Q1 (GAINER) | Pred: UP (0.80) | Actual: +38.87% | Hit: ✓ | 87.7s
+  [15/50] ✓ HOOD 2024-Q3 (GAINER) | Pred: UP (0.60) | Actual: +42.50% | Hit: ✓ | 99.6s
+[DEBUG] CompareWithPeers bucket size before helper: 2
+[DEBUG] CompareWithPeers bucket size after helper: 2
+[DEBUG] CompareWithPeers bucket size before helper: 3
+  [16/50] ✓ K 2024-Q2 (GAINER) | Pred: DOWN (0.50) | Actual: +38.74% | Hit: ✗ | 60.5s
+[DEBUG] CompareWithPeers bucket size after helper: 3
+[DEBUG] CompareWithPeers bucket size before helper: 0
+[DEBUG] CompareWithPeers bucket size after helper: 0
+  [17/50] ✓ PAYC 2024-Q3 (GAINER) | Pred: UP (0.60) | Actual: +36.14% | Hit: ✓ | 78.1s
+[DEBUG] CompareWithPeers bucket size before helper: 3
+[DEBUG] CompareWithPeers bucket size before helper: 3
+[DEBUG] CompareWithPeers bucket size after helper: 3
+[DEBUG] CompareWithPeers bucket size after helper: 3
+  [18/50] ✓ FTNT 2024-Q2 (GAINER) | Pred: DOWN (0.50) | Actual: +35.57% | Hit: ✗ | 92.7s
+  [19/50] ✓ CRWD 2024-Q3 (GAINER) | Pred: UP (0.70) | Actual: +33.44% | Hit: ✓ | 89.4s
+  [20/50] ✓ TPR 2024-Q1 (GAINER) | Pred: DOWN (0.50) | Actual: +34.92% | Hit: ✗ | 91.5s
+
+--- Interim Summary (1 completed) ---
+Success: 1 | Failed: 0
+Overall Hit Rate: 0/1 = 0.0%
+  Gainers: 0/1 = 0.0%
+Avg time: 91.5s | Total time: 91.5s
+[DEBUG] CompareWithPeers bucket size before helper: 4
+[DEBUG] CompareWithPeers bucket size after helper: 4
+  [21/50] ✓ AXON 2024-Q3 (GAINER) | Pred: DOWN (0.50) | Actual: +33.15% | Hit: ✗ | 81.9s
+[DEBUG] CompareWithPeers bucket size before helper: 3
+[DEBUG] CompareWithPeers bucket size after helper: 3
+[DEBUG] CompareWithPeers bucket size before helper: 0
+[DEBUG] CompareWithPeers bucket size after helper: 0
+[DEBUG] CompareWithPeers bucket size before helper: 6
+[DEBUG] CompareWithPeers bucket size after helper: 6
+  [22/50] ✓ TPL 2024-Q1 (GAINER) | Pred: UP (0.60) | Actual: +32.69% | Hit: ✓ | 98.2s
+[DEBUG] CompareWithPeers bucket size before helper: 0
+[DEBUG] CompareWithPeers bucket size after helper: 0
+  [23/50] ✓ CCL 2024-Q3 (GAINER) | Pred: DOWN (0.40) | Actual: +32.69% | Hit: ✗ | 92.3s
+[DEBUG] CompareWithPeers bucket size before helper: 3
+  [24/50] ✓ HOOD 2024-Q2 (GAINER) | Pred: UP (0.60) | Actual: +32.54% | Hit: ✓ | 88.6s
+[DEBUG] CompareWithPeers bucket size after helper: 3
+  [25/50] ✓ AXON 2024-Q2 (GAINER) | Pred: DOWN (0.50) | Actual: +32.12% | Hit: ✗ | 88.1s
+  [26/50] ✓ TTD 2024-Q4 (LOSER) | Pred: DOWN (0.50) | Actual: -54.31% | Hit: ✓ | 78.1s
+[DEBUG] CompareWithPeers bucket size before helper: 2
+[DEBUG] CompareWithPeers bucket size after helper: 2
+[DEBUG] CompareWithPeers bucket size before helper: 3
+[DEBUG] CompareWithPeers bucket size before helper: 0
+[DEBUG] CompareWithPeers bucket size after helper: 0
+[DEBUG] CompareWithPeers bucket size before helper: 2
+[DEBUG] CompareWithPeers bucket size after helper: 3
+  [27/50] ✓ MRNA 2024-Q2 (LOSER) | Pred: DOWN (0.20) | Actual: -42.73% | Hit: ✓ | 101.4s
+[DEBUG] CompareWithPeers bucket size after helper: 2
+  [28/50] ✓ EPAM 2024-Q4 (LOSER) | Pred: DOWN (0.50) | Actual: -39.73% | Hit: ✓ | 92.4s
+[DEBUG] CompareWithPeers bucket size before helper: 0
+[DEBUG] CompareWithPeers bucket size after helper: 0
+  [29/50] ✓ COIN 2024-Q4 (LOSER) | Pred: DOWN (0.50) | Actual: -42.23% | Hit: ✓ | 103.9s
+  [30/50] ✓ XYZ 2024-Q4 (LOSER) | Pred: UP (0.60) | Actual: -39.48% | Hit: ✗ | 101.1s
+  [31/50] ✓ TSLA 2024-Q4 (LOSER) | Pred: DOWN (0.50) | Actual: -35.75% | Hit: ✓ | 90.8s
+[DEBUG] CompareWithPeers bucket size before helper: 4
+[DEBUG] CompareWithPeers bucket size after helper: 4
+[DEBUG] CompareWithPeers bucket size before helper: 4
+[DEBUG] CompareWithPeers bucket size after helper: 4
+[DEBUG] CompareWithPeers bucket size before helper: 3
+[DEBUG] CompareWithPeers bucket size before helper: 0
+[DEBUG] CompareWithPeers bucket size after helper: 0
+[DEBUG] CompareWithPeers bucket size after helper: 3
+  [32/50] ✓ VTRS 2024-Q4 (LOSER) | Pred: DOWN (0.40) | Actual: -35.41% | Hit: ✓ | 87.0s
+[DEBUG] CompareWithPeers bucket size before helper: 4
+  [33/50] ✓ MU 2024-Q3 (LOSER) | Pred: DOWN (0.50) | Actual: -34.62% | Hit: ✓ | 83.9s
+  [34/50] ✓ DXCM 2024-Q2 (LOSER) | Pred: DOWN (0.40) | Actual: -35.36% | Hit: ✓ | 89.8s
+[DEBUG] CompareWithPeers bucket size after helper: 4
+  [35/50] ✓ MPWR 2024-Q3 (LOSER) | Pred: DOWN (0.30) | Actual: -33.85% | Hit: ✓ | 85.2s
+  [36/50] ✓ APA 2024-Q4 (LOSER) | Pred: UP (0.60) | Actual: -33.67% | Hit: ✗ | 90.3s
+[DEBUG] CompareWithPeers bucket size before helper: 4
+[DEBUG] CompareWithPeers bucket size after helper: 4
+[DEBUG] CompareWithPeers bucket size before helper: 4
+[DEBUG] CompareWithPeers bucket size after helper: 4
+[DEBUG] CompareWithPeers bucket size before helper: 4
+  [37/50] ✓ NCLH 2024-Q4 (LOSER) | Pred: DOWN (0.50) | Actual: -33.37% | Hit: ✓ | 71.8s
+[DEBUG] CompareWithPeers bucket size after helper: 4
+[DEBUG] CompareWithPeers bucket size before helper: 2
+[DEBUG] CompareWithPeers bucket size after helper: 2
+  [38/50] ✓ DG 2024-Q2 (LOSER) | Pred: DOWN (0.20) | Actual: -33.39% | Hit: ✓ | 89.5s
+[DEBUG] CompareWithPeers bucket size before helper: 2
+[DEBUG] CompareWithPeers bucket size after helper: 2
+  [39/50] ✓ WST 2024-Q4 (LOSER) | Pred: DOWN (0.40) | Actual: -31.05% | Hit: ✓ | 82.9s
+  [40/50] ✓ DDOG 2024-Q4 (LOSER) | Pred: DOWN (0.50) | Actual: -31.73% | Hit: ✓ | 91.0s
+
+--- Interim Summary (1 completed) ---
+Success: 1 | Failed: 0
+Overall Hit Rate: 1/1 = 100.0%
+  Losers: 1/1 = 100.0%
+Avg time: 91.0s | Total time: 91.0s
+  [41/50] ✓ GEV 2024-Q4 (LOSER) | Pred: UP (0.70) | Actual: -29.52% | Hit: ✗ | 79.4s
+[DEBUG] CompareWithPeers bucket size before helper: 3
+[DEBUG] CompareWithPeers bucket size after helper: 3
+[DEBUG] CompareWithPeers bucket size before helper: 5
+[DEBUG] CompareWithPeers bucket size after helper: 5
+  [42/50] ✓ SMCI 2024-Q4 (LOSER) | Pred: DOWN (0.50) | Actual: -29.13% | Hit: ✓ | 79.7s
+[DEBUG] CompareWithPeers bucket size before helper: 3
+[DEBUG] CompareWithPeers bucket size before helper: 5
+[DEBUG] CompareWithPeers bucket size after helper: 3
+[DEBUG] CompareWithPeers bucket size after helper: 5
+[DEBUG] CompareWithPeers bucket size before helper: 4
+  [43/50] ✓ TER 2024-Q4 (LOSER) | Pred: UP (0.60) | Actual: -28.93% | Hit: ✗ | 82.2s
+[DEBUG] CompareWithPeers bucket size after helper: 4
+  [44/50] ✓ APP 2024-Q4 (LOSER) | Pred: UP (0.70) | Actual: -28.38% | Hit: ✗ | 72.4s
+  [45/50] ✓ KKR 2024-Q4 (LOSER) | Pred: DOWN (0.40) | Actual: -28.60% | Hit: ✓ | 84.2s
+  [46/50] ✓ NEM 2024-Q3 (LOSER) | Pred: UP (0.60) | Actual: -28.80% | Hit: ✗ | 87.7s
+[DEBUG] CompareWithPeers bucket size before helper: 4
+[DEBUG] CompareWithPeers bucket size after helper: 4
+[DEBUG] CompareWithPeers bucket size before helper: 3
+[DEBUG] CompareWithPeers bucket size after helper: 3
+[DEBUG] CompareWithPeers bucket size before helper: 2
+  [47/50] ✓ INTC 2024-Q2 (LOSER) | Pred: DOWN (0.40) | Actual: -28.02% | Hit: ✓ | 84.9s
+[DEBUG] CompareWithPeers bucket size after helper: 2
+[DEBUG] CompareWithPeers bucket size before helper: 4
+[DEBUG] CompareWithPeers bucket size after helper: 4
+  [48/50] ✓ BLDR 2024-Q1 (LOSER) | Pred: DOWN (0.30) | Actual: -27.95% | Hit: ✓ | 88.4s
+  [49/50] ✓ ANET 2024-Q4 (LOSER) | Pred: UP (0.60) | Actual: -27.82% | Hit: ✗ | 82.4s
+  [50/50] ✓ PANW 2024-Q2 (LOSER) | Pred: DOWN (0.40) | Actual: -27.56% | Hit: ✓ | 89.2s
+
+================================================================================
+FINAL SUMMARY
+================================================================================
+
+--- Interim Summary (50 completed) ---
+Success: 50 | Failed: 0
+Overall Hit Rate: 29/50 = 58.0%
+  Gainers: 11/25 = 44.0%
+  Losers: 18/25 = 72.0%
+Avg time: 91.8s | Total time: 4590.8s
+
+📁 Full results saved to: /Users/garen.lee/Coding/agentic-openenvolve/test_results_movers_FULL_20251229_200700.csv
+
+End time: 2025-12-29 20:07:00
+================================================================================
