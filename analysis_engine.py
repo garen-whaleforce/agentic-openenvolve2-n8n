@@ -1,32 +1,126 @@
 import asyncio
 import logging
 import os
+import random
+import time
 from datetime import datetime, timedelta
 from typing import Dict, Optional
 from uuid import uuid4
 
+logger = logging.getLogger(__name__)
+
 from agentic_rag_bridge import AgenticRagBridgeError, run_single_call_from_context
 from neo4j_ingest import Neo4jIngestError, ingest_context_into_neo4j, ingest_recent_history_into_neo4j
 from fmp_client import get_earnings_context, get_earnings_context_async, NoTranscriptError
+
+# Import LLM fallback utilities
+try:
+    from EarningsCallAgenticRag.utils.llm import (
+        switch_to_azure_fallback,
+        get_current_provider,
+        _is_provider_error,
+    )
+    HAS_LLM_FALLBACK = True
+except ImportError:
+    HAS_LLM_FALLBACK = False
+    def switch_to_azure_fallback(): pass
+    def get_current_provider(): return "litellm"
+    def _is_provider_error(exc): return False
 from storage import (
     record_analysis,
     get_cached_payload,
     set_cached_payload,
 )
-from redis_cache import cache_get_json, cache_set_json
+# Try MinIO cache first, fallback to Redis
+try:
+    from minio_cache import cache_get_json, cache_set_json, check_minio_connection
+    if check_minio_connection():
+        logger.info("Using MinIO for cache")
+        CACHE_TYPE = "minio"
+    else:
+        raise ImportError("MinIO not available")
+except Exception:
+    try:
+        from redis_cache import cache_get_json, cache_set_json
+        CACHE_TYPE = "redis"
+    except ImportError:
+        # No cache available
+        async def cache_get_json(key): return None
+        async def cache_set_json(key, value, ttl): pass
+        CACHE_TYPE = "none"
 from earnings_backtest import compute_earnings_backtest
 
 # Whaleforce Services Integration
 from services.performance_metrics_client import PerformanceMetricsClient, get_performance_metrics_client
 from services.backtester_client import BacktesterClient, get_backtester_client
-
-logger = logging.getLogger(__name__)
 PAYLOAD_CACHE_MINUTES = int(os.getenv("PAYLOAD_CACHE_MINUTES", "1440"))  # DB cache validity in minutes (default 1 day)
 REDIS_PAYLOAD_TTL_SECONDS = int(os.getenv("REDIS_PAYLOAD_TTL_SECONDS", "3600"))  # Redis TTL in seconds (default 1 hour)
 
 # Feature flags for service integrations
 ENABLE_PERFORMANCE_METRICS = os.getenv("ENABLE_PERFORMANCE_METRICS", "true").lower() == "true"
 ENABLE_BACKTESTER_VALIDATION = os.getenv("ENABLE_BACKTESTER_VALIDATION", "true").lower() == "true"
+
+# 429 Rate Limit Retry Configuration
+RETRY_MAX_ATTEMPTS = int(os.getenv("RETRY_MAX_ATTEMPTS", "6"))
+RETRY_INITIAL_BACKOFF = float(os.getenv("RETRY_INITIAL_BACKOFF", "2.0"))  # seconds
+RETRY_MAX_BACKOFF = float(os.getenv("RETRY_MAX_BACKOFF", "60.0"))  # seconds
+RETRY_BACKOFF_MULTIPLIER = float(os.getenv("RETRY_BACKOFF_MULTIPLIER", "2.0"))
+
+
+def _is_rate_limit_error(exc: Exception) -> bool:
+    """Check if exception is a 429 rate limit error."""
+    error_str = str(exc).lower()
+    return "429" in error_str or "rate limit" in error_str or "too many requests" in error_str
+
+
+def _retry_with_backoff_and_fallback(func, max_attempts: int = RETRY_MAX_ATTEMPTS):
+    """
+    Retry a function with exponential backoff + jitter for 429 errors.
+    For provider errors (503, 401), switch to Azure fallback and retry once.
+    """
+    last_exc = None
+    backoff = RETRY_INITIAL_BACKOFF
+    tried_fallback = False
+
+    for attempt in range(1, max_attempts + 1):
+        try:
+            return func()
+        except Exception as exc:
+            last_exc = exc
+
+            # Check for provider error (503, 401, connection error)
+            if HAS_LLM_FALLBACK and _is_provider_error(exc) and not tried_fallback:
+                current = get_current_provider()
+                if current == "litellm":
+                    logger.warning(f"Provider error detected: {exc}")
+                    logger.info("Switching to Azure OpenAI fallback...")
+                    switch_to_azure_fallback()
+                    tried_fallback = True
+                    # Retry immediately with fallback
+                    continue
+
+            # Check for rate limit
+            if not _is_rate_limit_error(exc):
+                # Not a rate limit error, raise immediately
+                raise
+
+            if attempt == max_attempts:
+                logger.warning(f"Rate limit retry exhausted after {max_attempts} attempts")
+                raise
+
+            # Exponential backoff with jitter
+            jitter = random.uniform(0, backoff * 0.5)
+            sleep_time = min(backoff + jitter, RETRY_MAX_BACKOFF)
+            logger.info(f"Rate limit hit (attempt {attempt}/{max_attempts}), retrying in {sleep_time:.1f}s...")
+            time.sleep(sleep_time)
+            backoff = min(backoff * RETRY_BACKOFF_MULTIPLIER, RETRY_MAX_BACKOFF)
+
+    if last_exc:
+        raise last_exc
+
+
+# Backwards compatibility alias
+_retry_with_backoff = _retry_with_backoff_and_fallback
 
 
 def run_agentic_rag(
@@ -85,10 +179,13 @@ def run_agentic_rag(
             logger.warning("Neo4j ingestion failed: %s", exc)
 
     try:
-        result = run_single_call_from_context(
-            context,
-            main_model=main_model,
-            helper_model=helper_model,
+        # Wrap in retry for 429 rate limit errors
+        result = _retry_with_backoff(
+            lambda: run_single_call_from_context(
+                context,
+                main_model=main_model,
+                helper_model=helper_model,
+            )
         )
     except AgenticRagBridgeError:
         # Propagate bridge-specific errors directly for clearer API feedback

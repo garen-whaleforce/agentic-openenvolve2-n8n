@@ -424,7 +424,10 @@ Be **conservative**:
 
 **Critical calibration rules:**
 
-1. **Guidance-first rule**: If guidance is flat, lowered, or withdrawn, **cap the maximum score at 5** regardless of how strong the current quarter appears. Forward guidance is the single most important predictor of 30-day returns.
+1. **Guidance-first rule**: Forward guidance is the single most important predictor of 30-day returns.
+   - If guidance is **lowered or withdrawn**, cap maximum score at **4**
+   - If guidance is **flat or reaffirmed** (not raised), cap maximum score at **7**
+   - Allow scores **8-10** only when guidance is **explicitly raised** AND market anchors (EPS surprise, earnings-day return) are positive
 
 2. **Tone-anchoring rule**: Start your scoring from the management tone:
    - "Very cautious" or "Moderately cautious" → Start from Direction **3-4**, adjust upward only with strong offsetting factors

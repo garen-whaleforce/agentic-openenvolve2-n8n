@@ -234,8 +234,10 @@ def run_single_call_from_context(
             market_anchors["earnings_day_return"] = price_analysis.get("pct_change_t")
 
         # Get pre-earnings momentum (5-day)
+        # FIX: Normalize transcript_date to YYYY-MM-DD (FMP may return "YYYY-MM-DD HH:MM:SS")
         if transcript_date:
-            momentum = pg_client.get_pre_earnings_momentum(symbol, transcript_date, days=5)
+            normalized_date = transcript_date[:10] if len(transcript_date) >= 10 else transcript_date
+            momentum = pg_client.get_pre_earnings_momentum(symbol, normalized_date, days=5)
             if momentum:
                 market_anchors["pre_earnings_5d_return"] = momentum.get("return_pct")
 
@@ -356,7 +358,7 @@ def run_single_call_from_context(
                 pass
 
         # Try to find raw JSON block at the end
-        json_match = re.search(r'\{\s*"DirectionScore"[\s\S]*?"AnchorNotes"[\s\S]*?\}', summary)
+        json_match = re.search(r'\{\s*"DirectionScore"[\s\S]*?"PricedInRisk"[^}]*\}', summary)
         if json_match:
             try:
                 return json.loads(json_match.group(0))
@@ -365,51 +367,222 @@ def run_single_call_from_context(
 
         return None
 
-    def _compute_trade_long(long_json: Optional[Dict[str, Any]], sector: Optional[str] = None) -> bool:
-        """Compute trade_long based on LongEligible criteria.
+    # =========================================================================
+    # Long-only Strategy v3.0 - TWO-TIER ARCHITECTURE
+    # =========================================================================
+    # Tier 1 (D7 CORE): D7+ with relaxed positives, strict market-confirmation
+    # Tier 2 (D6 STRICT): D6 exception layer with very strict filters
+    # =========================================================================
 
-        Rules:
-        - DirectionScore >= 8
-        - HardVetoCount == 0
-        - HardPositivesCount >= 2
-        - PricedInRisk != High
-        - Tech sector: require GuidanceRaised OR (DemandAcceleration AND VisibilityImproving)
+    # PricedInRisk thresholds (env-tunable)
+    RISK_EPS_MISS_THRESHOLD = float(os.getenv("RISK_EPS_MISS_THRESHOLD", "0"))
+    RISK_EARNINGS_DAY_LOW = float(os.getenv("RISK_EARNINGS_DAY_LOW", "-3"))
+    RISK_PRE_RUNUP_HIGH = float(os.getenv("RISK_PRE_RUNUP_HIGH", "15"))
+    RISK_PRE_RUNUP_LOW = float(os.getenv("RISK_PRE_RUNUP_LOW", "5"))
+
+    # -------------------------------------------------------------------------
+    # TIER 1: D7 CORE (主幹層 - Direction >= 7)
+    # -------------------------------------------------------------------------
+    LONG_D7_ENABLED = os.getenv("LONG_D7_ENABLED", "1") == "1"
+    LONG_D7_MIN_POSITIVES = int(os.getenv("LONG_D7_MIN_POSITIVES", "0"))  # 不卡 positives
+    LONG_D7_MIN_DAY_RET = float(os.getenv("LONG_D7_MIN_DAY_RET", "1.0"))  # earnings_day >= 1%
+    LONG_D7_REQUIRE_EPS_POS = os.getenv("LONG_D7_REQUIRE_EPS_POS", "1") == "1"  # eps > 0
+
+    # -------------------------------------------------------------------------
+    # TIER 2: D6 STRICT EXCEPTION (補 coverage 層 - Direction == 6)
+    # -------------------------------------------------------------------------
+    LONG_D6_ENABLED = os.getenv("LONG_D6_ENABLED", "1") == "1"
+    LONG_D6_MIN_EPS_SURPRISE = float(os.getenv("LONG_D6_MIN_EPS_SURPRISE", "0.02"))  # eps >= 2%
+    LONG_D6_MIN_POSITIVES = int(os.getenv("LONG_D6_MIN_POSITIVES", "2"))  # positives >= 2
+    LONG_D6_MIN_DAY_RET = float(os.getenv("LONG_D6_MIN_DAY_RET", "0.5"))  # earnings_day >= 0.5%
+    LONG_D6_REQUIRE_LOW_RISK = os.getenv("LONG_D6_REQUIRE_LOW_RISK", "1") == "1"  # risk must be low
+    LONG_D6_ALLOW_MEDIUM_WITH_DAY = os.getenv("LONG_D6_ALLOW_MEDIUM_WITH_DAY", "0") == "1"  # allow medium if day>=0
+    LONG_D6_EXCLUDE_SECTORS = os.getenv("LONG_D6_EXCLUDE_SECTORS", "Technology").split(",")  # exclude Tech
+
+    # -------------------------------------------------------------------------
+    # Sector-specific rules (apply to both tiers)
+    # -------------------------------------------------------------------------
+    LONG_SECTOR_TIGHTEN_ENERGY = os.getenv("LONG_SECTOR_TIGHTEN_ENERGY", "1") == "1"
+    LONG_ENERGY_MIN_EPS = float(os.getenv("LONG_ENERGY_MIN_EPS", "0.05"))
+    LONG_ENERGY_MIN_DAY_RET = float(os.getenv("LONG_ENERGY_MIN_DAY_RET", "2.0"))
+
+    LONG_SECTOR_TIGHTEN_BASIC_MATERIALS = os.getenv("LONG_SECTOR_TIGHTEN_BASIC_MATERIALS", "1") == "1"
+    LONG_BASIC_MATERIALS_MIN_DAY_RET = float(os.getenv("LONG_BASIC_MATERIALS_MIN_DAY_RET", "2.0"))
+    LONG_EXCLUDE_BASIC_MATERIALS = os.getenv("LONG_EXCLUDE_BASIC_MATERIALS", "0") == "1"
+
+    def _compute_risk_from_anchors(anchors: Optional[Dict[str, Any]]) -> str:
+        """Compute PricedInRisk from market anchors (code-based, not LLM)."""
+        if not anchors:
+            return "medium"  # Default if no anchors
+
+        eps_surprise = anchors.get("eps_surprise")
+        earnings_day_return = anchors.get("earnings_day_return")
+        pre_earnings_5d_return = anchors.get("pre_earnings_5d_return")
+
+        # High risk conditions (any one triggers)
+        if eps_surprise is not None and eps_surprise <= RISK_EPS_MISS_THRESHOLD:
+            return "high"
+        if earnings_day_return is not None and earnings_day_return < RISK_EARNINGS_DAY_LOW:
+            return "high"
+        if pre_earnings_5d_return is not None and pre_earnings_5d_return > RISK_PRE_RUNUP_HIGH:
+            return "high"
+
+        # Low risk conditions (all must be true)
+        eps_ok = eps_surprise is None or eps_surprise > 0
+        day_ok = earnings_day_return is None or earnings_day_return > 0
+        runup_ok = pre_earnings_5d_return is None or pre_earnings_5d_return < RISK_PRE_RUNUP_LOW
+
+        if eps_ok and day_ok and runup_ok:
+            return "low"
+
+        return "medium"
+
+    def _compute_counts_from_booleans(long_json: Optional[Dict[str, Any]]) -> tuple[int, int]:
+        """Compute HardPositivesCount and HardVetoCount from boolean fields (not trusting LLM counts)."""
+        if not long_json:
+            return 0, 5  # No positives, max vetoes
+
+        positive_fields = ["GuidanceRaised", "DemandAcceleration", "MarginExpansion", "FCFImprovement", "VisibilityImproving"]
+        veto_fields = ["GuidanceCut", "DemandSoftness", "MarginWeakness", "CashBurn", "VisibilityWorsening"]
+
+        positives = sum(1 for f in positive_fields if str(long_json.get(f, "NO")).upper() == "YES")
+        vetoes = sum(1 for f in veto_fields if str(long_json.get(f, "NO")).upper() == "YES")
+
+        return positives, vetoes
+
+    def _compute_trade_long(
+        long_json: Optional[Dict[str, Any]],
+        sector: Optional[str] = None,
+        market_anchors: Optional[Dict[str, Any]] = None
+    ) -> tuple[bool, str, str, str]:
+        """Compute trade_long based on TWO-TIER LongEligible criteria (v3.0).
+
+        Returns: (trade_long: bool, risk_code: str, block_reason: str, tier: str)
+
+        TWO-TIER ARCHITECTURE:
+        - Tier 1 (D7_CORE): Direction>=7, veto=0, risk!=high, eps>0, day>=1%, pos>=0
+        - Tier 2 (D6_STRICT): Direction==6, veto=0, risk=low, eps>=2%, day>=0.5%, pos>=2, non-Tech
         """
         if not long_json:
-            return False
+            return False, "unknown", "NO_JSON", ""
 
         try:
             direction_score = int(long_json.get("DirectionScore", 0))
-            hard_veto_count = int(long_json.get("HardVetoCount", 5))
-            hard_positives_count = int(long_json.get("HardPositivesCount", 0))
-            priced_in_risk = str(long_json.get("PricedInRisk", "High")).lower()
-            long_eligible_str = str(long_json.get("LongEligible", "NO")).upper()
 
-            # Basic criteria
-            basic_eligible = (
-                direction_score >= 8 and
-                hard_veto_count == 0 and
-                hard_positives_count >= 2 and
-                priced_in_risk != "high"
+            # Compute counts from booleans (not trusting LLM self-reported counts)
+            hard_positives_count, hard_veto_count = _compute_counts_from_booleans(long_json)
+
+            # Compute risk from market anchors (not trusting LLM PricedInRisk)
+            computed_risk = _compute_risk_from_anchors(market_anchors)
+
+            # Extract market anchor values
+            eps_surprise = market_anchors.get("eps_surprise") if market_anchors else None
+            earnings_day_ret = market_anchors.get("earnings_day_return") if market_anchors else None
+
+            # Normalize sector for comparison
+            sector_lower = (sector or "").lower()
+            is_energy = "energy" in sector_lower
+            is_basic_materials = "basic materials" in sector_lower or "materials" in sector_lower
+
+            # Check if sector is in D6 exclude list
+            sector_in_d6_exclude = any(
+                excl.strip().lower() in sector_lower
+                for excl in LONG_D6_EXCLUDE_SECTORS if excl.strip()
             )
 
-            if not basic_eligible:
-                return False
+            # =================================================================
+            # GLOBAL GATING (applies to all tiers)
+            # =================================================================
+            if computed_risk == "high":
+                return False, computed_risk, "HIGH_RISK", ""
 
-            # Tech sector additional rule
-            is_tech = sector and "technology" in sector.lower()
-            if is_tech:
-                guidance_raised = str(long_json.get("GuidanceRaised", "NO")).upper() == "YES"
-                demand_accel = str(long_json.get("DemandAcceleration", "NO")).upper() == "YES"
-                visibility_improving = str(long_json.get("VisibilityImproving", "NO")).upper() == "YES"
+            if hard_veto_count > 0:
+                return False, computed_risk, "HAS_VETOES", ""
 
-                if not (guidance_raised or (demand_accel and visibility_improving)):
-                    return False
+            # =================================================================
+            # SECTOR-SPECIFIC TIGHTENING (applies before tier logic)
+            # =================================================================
+            # Energy sector: require EPS >= 0.05, earnings_day >= 2%
+            if is_energy and LONG_SECTOR_TIGHTEN_ENERGY:
+                if eps_surprise is None or eps_surprise < LONG_ENERGY_MIN_EPS:
+                    return False, computed_risk, "ENERGY_EPS_LOW", ""
+                if earnings_day_ret is None or earnings_day_ret < LONG_ENERGY_MIN_DAY_RET:
+                    return False, computed_risk, "ENERGY_DAY_RET_LOW", ""
 
-            return True
+            # Basic Materials: exclude entirely OR require earnings_day >= 2%
+            if is_basic_materials:
+                if LONG_EXCLUDE_BASIC_MATERIALS:
+                    return False, computed_risk, "BASIC_MATERIALS_EXCLUDED", ""
+                if LONG_SECTOR_TIGHTEN_BASIC_MATERIALS:
+                    if earnings_day_ret is None or earnings_day_ret < LONG_BASIC_MATERIALS_MIN_DAY_RET:
+                        return False, computed_risk, "BASIC_MATERIALS_DAY_RET_LOW", ""
+
+            # =================================================================
+            # TIER 1: D7 CORE (Direction >= 7)
+            # =================================================================
+            if direction_score >= 7 and LONG_D7_ENABLED:
+                # D7 不卡 positives (or minimal)
+                if hard_positives_count < LONG_D7_MIN_POSITIVES:
+                    return False, computed_risk, "D7_POSITIVES_LOW", ""
+
+                # EPS > 0 check
+                if LONG_D7_REQUIRE_EPS_POS:
+                    if eps_surprise is None:
+                        return False, computed_risk, "D7_EPS_MISSING", ""
+                    if eps_surprise <= 0:
+                        return False, computed_risk, "D7_EPS_NOT_POS", ""
+
+                # earnings_day >= threshold
+                if earnings_day_ret is None or earnings_day_ret < LONG_D7_MIN_DAY_RET:
+                    return False, computed_risk, "D7_DAY_RET_LOW", ""
+
+                # D7 CORE passed!
+                return True, computed_risk, "", "D7_CORE"
+
+            # =================================================================
+            # TIER 2: D6 STRICT EXCEPTION (Direction == 6)
+            # =================================================================
+            if direction_score == 6 and LONG_D6_ENABLED:
+                # Sector exclusion (e.g., Technology)
+                if sector_in_d6_exclude:
+                    return False, computed_risk, "D6_SECTOR_EXCLUDED", ""
+
+                # Risk check: require low (or allow medium with day>=0)
+                if LONG_D6_REQUIRE_LOW_RISK:
+                    if computed_risk != "low":
+                        if LONG_D6_ALLOW_MEDIUM_WITH_DAY and computed_risk == "medium":
+                            if earnings_day_ret is None or earnings_day_ret < 0:
+                                return False, computed_risk, "D6_MEDIUM_DAY_NEG", ""
+                        else:
+                            return False, computed_risk, "D6_RISK_NOT_LOW", ""
+
+                # EPS surprise >= threshold (stricter than D7)
+                if eps_surprise is None:
+                    return False, computed_risk, "D6_EPS_MISSING", ""
+                if eps_surprise < LONG_D6_MIN_EPS_SURPRISE:
+                    return False, computed_risk, "D6_EPS_TOO_SMALL", ""
+
+                # Positives >= 2 (stricter than D7)
+                if hard_positives_count < LONG_D6_MIN_POSITIVES:
+                    return False, computed_risk, "D6_POSITIVES_LOW", ""
+
+                # earnings_day >= threshold
+                if earnings_day_ret is None or earnings_day_ret < LONG_D6_MIN_DAY_RET:
+                    return False, computed_risk, "D6_DAY_RET_LOW", ""
+
+                # D6 STRICT passed!
+                return True, computed_risk, "", "D6_STRICT"
+
+            # =================================================================
+            # Direction too low (< 6) or tier not enabled
+            # =================================================================
+            if direction_score < 6:
+                return False, computed_risk, "DIR_TOO_LOW", ""
+
+            return False, computed_risk, "TIER_NOT_MATCHED", ""
 
         except (ValueError, TypeError):
-            return False
+            return False, "unknown", "EXCEPTION", ""
 
     notes = agent_output.get("notes") or {}
 
@@ -439,9 +612,12 @@ def run_single_call_from_context(
 
     prediction, confidence = _infer_direction(agent_output.get("summary"))
 
-    # Extract LongEligible JSON and compute trade_long
+    # Extract LongEligible JSON and compute trade_long (returns 4-tuple with tier)
     long_eligible_json = _extract_long_eligible_json(agent_output.get("summary"))
-    trade_long = _compute_trade_long(long_eligible_json, sector)
+    trade_long, risk_code, long_block_reason, trade_long_tier = _compute_trade_long(long_eligible_json, sector, market_anchors)
+
+    # Compute counts for CSV output (code-based, not LLM)
+    computed_positives, computed_vetoes = _compute_counts_from_booleans(long_eligible_json)
 
     meta = agent_output.setdefault("metadata", {})
     meta.setdefault(
@@ -462,6 +638,13 @@ def run_single_call_from_context(
         "raw": agent_output,
         "trade_long": trade_long,
         "long_eligible_json": long_eligible_json,
+        # New fields for CSV output and offline grid search
+        "risk_code": risk_code,
+        "long_block_reason": long_block_reason,  # Why trade was blocked (empty if not blocked)
+        "trade_long_tier": trade_long_tier,  # D7_CORE or D6_STRICT (empty if not traded)
+        "market_anchors": market_anchors,
+        "computed_positives": computed_positives,
+        "computed_vetoes": computed_vetoes,
     }
 
 
