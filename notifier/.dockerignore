@@ -1,0 +1,34 @@
+# Dependencies
+node_modules/
+
+# Build output (will be regenerated)
+dist/
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Git
+.git/
+.gitignore
+
+# IDE
+.idea/
+.vscode/
+
+# Logs
+*.log
+logs/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Docs
+README.md
+*.md
+
+# Test
+coverage/
+*.test.ts
