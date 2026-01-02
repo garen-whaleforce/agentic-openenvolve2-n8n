@@ -1,0 +1,21 @@
+# ============================================
+# Caddy 設定 - 複製到 /home/public/.caddy/Caddyfile
+# ============================================
+
+# Frontend - 主頁面
+earnings.gpu5090.whaleforce.dev:443 {
+  import common_tls
+  reverse_proxy 0.0.0.0:9101
+}
+
+# Backend API
+earnings-api.gpu5090.whaleforce.dev:443 {
+  import common_tls
+  reverse_proxy 0.0.0.0:9100
+}
+
+# Notifier (可選，用於 Admin API)
+earnings-notifier.gpu5090.whaleforce.dev:443 {
+  import common_tls
+  reverse_proxy 0.0.0.0:9102
+}

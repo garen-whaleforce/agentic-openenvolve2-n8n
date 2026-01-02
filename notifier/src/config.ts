@@ -34,7 +34,11 @@ const envSchema = z.object({
     .transform((v) => parseInt(v, 10)),
   MAX_SYMBOLS: z
     .string()
-    .default('15')
+    .default('100')
+    .transform((v) => parseInt(v, 10)),
+  BATCH_SIZE: z
+    .string()
+    .default('5')
     .transform((v) => parseInt(v, 10)),
   LOOKBACK_DAYS: z
     .string()
@@ -103,6 +107,7 @@ export function logConfigSummary(): void {
   console.log(`   - LINE_TO: ${config.LINE_TO.slice(0, 8)}...`);
   console.log(`   - MIN_MARKET_CAP: ${(config.MIN_MARKET_CAP / 1e9).toFixed(1)}B`);
   console.log(`   - MAX_SYMBOLS: ${config.MAX_SYMBOLS}`);
+  console.log(`   - BATCH_SIZE: ${config.BATCH_SIZE}`);
   console.log(`   - LOOKBACK_DAYS: ${config.LOOKBACK_DAYS}`);
   console.log(`   - CONF_THRESHOLD: ${(config.CONF_THRESHOLD * 100).toFixed(0)}%`);
   console.log(`   - REQUEST_DELAY_MS: ${config.REQUEST_DELAY_MS}ms`);

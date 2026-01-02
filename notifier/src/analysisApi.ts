@@ -12,7 +12,7 @@ import type { EarningsCallItem, AnalysisResponse } from './types.js';
  */
 const apiClient = axios.create({
   baseURL: config.ANALYSIS_API_BASE,
-  timeout: 120000, // 2 分鐘（分析可能較久）
+  timeout: 300000, // 5 分鐘（歷史資料查詢可能較久）
   headers: {
     'Content-Type': 'application/json',
   },
@@ -136,4 +136,45 @@ export function getErrorMessage(error: unknown): string {
     return error.message;
   }
   return String(error);
+}
+
+/**
+ * 已分析記錄的結構
+ */
+export interface AnalyzedCall {
+  symbol: string;
+  date: string;
+  job_id?: string;
+  created_at?: string;
+}
+
+/**
+ * 取得已分析過的 Earnings Calls
+ */
+export async function fetchAnalyzedCalls(
+  startDate?: string,
+  endDate?: string
+): Promise<AnalyzedCall[]> {
+  logger.debug({ startDate, endDate }, '取得已分析記錄...');
+
+  try {
+    const params: Record<string, string | number> = { limit: 1000 };
+    if (startDate) params.start_date = startDate;
+    if (endDate) params.end_date = endDate;
+
+    const response = await apiClient.get<AnalyzedCall[]>('/api/calls', { params });
+
+    logger.debug({ count: response.data.length }, '已分析記錄數量');
+    return response.data;
+  } catch (error) {
+    const axiosError = error as AxiosError;
+    logger.warn(
+      {
+        status: axiosError.response?.status,
+        message: axiosError.message,
+      },
+      '取得已分析記錄失敗（可能尚無記錄）'
+    );
+    return [];
+  }
 }

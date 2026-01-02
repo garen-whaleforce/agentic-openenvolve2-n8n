@@ -3,10 +3,12 @@
  */
 
 import express, { Request, Response, NextFunction } from 'express';
-import { config } from './config.js';
+import { DateTime } from 'luxon';
+import { config, EASTERN_TIMEZONE } from './config.js';
 import logger from './logger.js';
 import { sendTestMessage } from './line.js';
-import { runDailyScan } from './runner.js';
+import { runDailyScan, ScanOptions } from './runner.js';
+import { getNextRunTime } from './cron.js';
 
 const app = express();
 
@@ -84,19 +86,32 @@ app.post('/admin/test-line', adminAuth, async (req: Request, res: Response) => {
  * 手動觸發每日掃描
  * POST /admin/run-scan
  * Headers: x-admin-token: {ADMIN_TOKEN}
+ * Body (optional): { "endDate": "2025-11-30", "lookbackDays": 7, "skipDedup": true }
  */
-app.post('/admin/run-scan', adminAuth, async (_req: Request, res: Response) => {
+app.post('/admin/run-scan', adminAuth, async (req: Request, res: Response) => {
   try {
-    logger.info('手動觸發每日掃描...');
+    const { endDate, lookbackDays, skipDedup } = req.body as {
+      endDate?: string;
+      lookbackDays?: number;
+      skipDedup?: boolean;
+    };
+
+    const options: ScanOptions = {};
+    if (endDate) options.endDate = endDate;
+    if (lookbackDays) options.lookbackDays = lookbackDays;
+    if (skipDedup) options.skipDedup = skipDedup;
+
+    logger.info({ options }, '手動觸發每日掃描...');
 
     // 非同步執行，立即回應
-    runDailyScan().catch((error) => {
+    runDailyScan(options).catch((error) => {
       logger.error({ error }, '手動掃描執行失敗');
     });
 
     res.status(202).json({
       success: true,
       message: '掃描已啟動，結果將透過 LINE 推播',
+      options,
     });
   } catch (error) {
     logger.error({ error }, '手動掃描啟動失敗');
@@ -114,13 +129,19 @@ app.post('/admin/run-scan', adminAuth, async (_req: Request, res: Response) => {
  * Headers: x-admin-token: {ADMIN_TOKEN}
  */
 app.get('/admin/status', adminAuth, (_req: Request, res: Response) => {
-  const { DateTime } = require('luxon');
-  const now = DateTime.now().setZone('America/New_York');
+  const now = DateTime.now().setZone(EASTERN_TIMEZONE);
+  let nextRun: string | null = null;
+  try {
+    nextRun = getNextRunTime();
+  } catch {
+    // ignore
+  }
 
   res.status(200).json({
     service: 'earnings-call-notifier',
     status: 'running',
     etTime: now.toFormat('yyyy-MM-dd HH:mm:ss'),
+    nextScheduledRun: nextRun,
     config: {
       analysisApiBase: config.ANALYSIS_API_BASE,
       lineToPrefix: config.LINE_TO.slice(0, 8) + '...',
@@ -150,9 +171,17 @@ app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
 /**
  * 啟動伺服器
  */
-export function startServer(): void {
-  app.listen(config.PORT, () => {
-    logger.info({ port: config.PORT }, '🚀 伺服器啟動');
+export function startServer(): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const server = app.listen(config.PORT, () => {
+      logger.info({ port: config.PORT }, '🚀 伺服器啟動');
+      resolve();
+    });
+
+    server.on('error', (err) => {
+      logger.error({ error: err.message }, '伺服器啟動失敗');
+      reject(err);
+    });
   });
 }
 

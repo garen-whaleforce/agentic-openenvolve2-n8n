@@ -22,15 +22,20 @@ async function main(): Promise<void> {
   logConfigSummary();
   console.log('');
 
-  // 啟動伺服器
-  startServer();
-
   // 啟動排程
   startScheduler();
 
   // 顯示下次執行時間
-  const nextRun = getNextRunTime();
-  logger.info({ nextRun }, '📅 下次執行時間');
+  try {
+    const nextRun = getNextRunTime();
+    logger.info({ nextRun }, '📅 下次執行時間');
+  } catch (error) {
+    logger.warn({ error: String(error) }, '無法計算下次執行時間');
+  }
+
+  // 啟動伺服器
+  await startServer();
+  logger.info('所有服務啟動完成，等待請求...');
 
   // 優雅關閉
   process.on('SIGTERM', () => {
@@ -45,6 +50,10 @@ async function main(): Promise<void> {
 }
 
 main().catch((error) => {
-  logger.fatal({ error }, '啟動失敗');
+  const errorMessage = error instanceof Error ? error.message : String(error);
+  const errorStack = error instanceof Error ? error.stack : undefined;
+  logger.fatal({ error: errorMessage, stack: errorStack }, '啟動失敗');
+  console.error('啟動失敗:', errorMessage);
+  if (errorStack) console.error(errorStack);
   process.exit(1);
 });

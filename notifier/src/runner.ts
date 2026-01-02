@@ -10,6 +10,7 @@ import {
   analyzeEarningsCall,
   isTranscriptPendingError,
   getErrorMessage,
+  fetchAnalyzedCalls,
 } from './analysisApi.js';
 import { pushMultipleTexts, formatConfidence } from './line.js';
 import type {
@@ -27,42 +28,63 @@ function delay(ms: number): Promise<void> {
 }
 
 /**
+ * 掃描選項
+ */
+export interface ScanOptions {
+  /** 指定結束日期 (YYYY-MM-DD)，預設為昨天 */
+  endDate?: string;
+  /** 回顧天數，預設使用 config.LOOKBACK_DAYS */
+  lookbackDays?: number;
+  /** 是否跳過去重檢查（強制重新分析） */
+  skipDedup?: boolean;
+}
+
+/**
  * 計算日期範圍
  */
-function getDateRange(): { startDate: string; endDate: string } {
-  const now = DateTime.now().setZone(EASTERN_TIMEZONE);
-  const yesterday = now.minus({ days: 1 });
-  const startDate = yesterday.minus({ days: config.LOOKBACK_DAYS - 1 });
+function getDateRange(options?: ScanOptions): { startDate: string; endDate: string } {
+  const lookbackDays = options?.lookbackDays ?? config.LOOKBACK_DAYS;
+
+  let endDateTime: DateTime;
+  if (options?.endDate) {
+    endDateTime = DateTime.fromISO(options.endDate, { zone: EASTERN_TIMEZONE });
+  } else {
+    const now = DateTime.now().setZone(EASTERN_TIMEZONE);
+    endDateTime = now.minus({ days: 1 });
+  }
+
+  const startDateTime = endDateTime.minus({ days: lookbackDays - 1 });
 
   return {
-    startDate: startDate.toFormat(DATE_FORMAT),
-    endDate: yesterday.toFormat(DATE_FORMAT),
+    startDate: startDateTime.toFormat(DATE_FORMAT),
+    endDate: endDateTime.toFormat(DATE_FORMAT),
   };
 }
 
 /**
- * 取得目標日期（最新有資料的日期）
+ * 過濾出尚未分析的 Earnings Calls
+ * @param calls 所有 Earnings Calls
+ * @param analyzedSet 已分析過的 symbol+date 集合
+ *
+ * 排序邏輯：
+ * 1. 先按日期降序（最新優先）
+ * 2. 同日期按市值降序
+ *
+ * 注意：不再限制數量，會掃描所有未分析的，每 BATCH_SIZE 個推送一次
  */
-function getTargetDate(calls: EarningsCallItem[]): string | null {
-  if (calls.length === 0) return null;
-
-  // 依日期分組並找最大日期
-  const dates = [...new Set(calls.map((c) => c.date))];
-  dates.sort((a, b) => b.localeCompare(a)); // 降序
-
-  return dates[0] ?? null;
-}
-
-/**
- * 取得目標日期的 Earnings Calls
- */
-function getTargetCalls(
+function filterNewCalls(
   calls: EarningsCallItem[],
-  targetDate: string
+  analyzedSet: Set<string>
 ): EarningsCallItem[] {
   return calls
-    .filter((c) => c.date === targetDate)
-    .sort((a, b) => (b.market_cap || 0) - (a.market_cap || 0))
+    .filter((c) => !analyzedSet.has(`${c.symbol}:${c.date}`))
+    .sort((a, b) => {
+      // 先按日期降序（最新優先）
+      const dateCompare = b.date.localeCompare(a.date);
+      if (dateCompare !== 0) return dateCompare;
+      // 同日期按市值降序
+      return (b.market_cap || 0) - (a.market_cap || 0);
+    })
     .slice(0, config.MAX_SYMBOLS);
 }
 
@@ -107,17 +129,20 @@ async function analyzeSymbol(
 
 /**
  * 執行每日掃描
+ * 掃描過去 LOOKBACK_DAYS 天的 earnings，只分析尚未分析過的新 transcript
+ * @param options 掃描選項（可指定日期範圍）
  */
-export async function runDailyScan(): Promise<DailyScanResult | null> {
+export async function runDailyScan(options?: ScanOptions): Promise<DailyScanResult | null> {
   const now = DateTime.now().setZone(EASTERN_TIMEZONE);
   const scannedAt = now.toFormat('yyyy-MM-dd HH:mm:ss');
 
   logger.info('========================================');
-  logger.info({ time: scannedAt }, '開始每日掃描');
+  logger.info({ time: scannedAt, options }, '開始每日掃描');
 
   // 1. 計算日期範圍
-  const { startDate, endDate } = getDateRange();
-  logger.info({ startDate, endDate }, '日期範圍');
+  const { startDate, endDate } = getDateRange(options);
+  const lookbackDays = options?.lookbackDays ?? config.LOOKBACK_DAYS;
+  logger.info({ startDate, endDate, lookbackDays }, '日期範圍');
 
   // 2. 取得 Earnings 清單
   let allCalls: EarningsCallItem[];
@@ -134,67 +159,114 @@ export async function runDailyScan(): Promise<DailyScanResult | null> {
     return null;
   }
 
-  // 3. 找目標日期
-  const targetDate = getTargetDate(allCalls);
-  if (!targetDate) {
-    logger.warn('沒有找到任何 Earnings Call');
-    await pushMultipleTexts([
-      `📅 Earnings Call Notifier\n\n` +
-        `美東時間：${scannedAt}\n` +
-        `查詢範圍：${startDate} ~ ${endDate}\n\n` +
-        `❌ 這段期間沒有符合條件的 Earnings Call`,
-    ]);
+  logger.info({ total: allCalls.length }, '符合市值條件的 Earnings Calls');
+
+  // 3. 取得已分析過的記錄（除非 skipDedup）
+  let analyzedSet: Set<string>;
+  if (options?.skipDedup) {
+    analyzedSet = new Set();
+    logger.info('跳過去重檢查（強制重新分析）');
+  } else {
+    const analyzedCalls = await fetchAnalyzedCalls(startDate, endDate);
+    analyzedSet = new Set(
+      analyzedCalls.map((c) => `${c.symbol}:${c.date}`)
+    );
+    logger.info({ analyzedCount: analyzedSet.size }, '已分析過的記錄');
+  }
+
+  // 4. 過濾出尚未分析的新 calls
+  const newCalls = filterNewCalls(allCalls, analyzedSet);
+
+  if (newCalls.length === 0) {
+    logger.info('沒有新的 Earnings Call 需要分析');
+    // 不推播訊息，靜默結束
+    logger.info('========================================');
     return null;
   }
 
-  // 4. 取得目標日期的清單
-  const targetCalls = getTargetCalls(allCalls, targetDate);
   logger.info(
-    { targetDate, count: targetCalls.length },
-    '目標日期 Earnings Calls'
+    { newCount: newCalls.length, symbols: newCalls.map((c) => c.symbol) },
+    '待分析的新 Earnings Calls'
   );
 
   // 5. 推播清單訊息
-  const tickerPreview = targetCalls.map((c) => c.symbol).join(', ');
+  const tickerPreview = newCalls.slice(0, 20).map((c) => `${c.symbol}(${c.date})`).join(', ');
   const listMessage =
-    `📅 Earnings Call 清單\n\n` +
+    `📅 Earnings Call 新增掃描\n\n` +
     `美東時間：${scannedAt}\n` +
-    `目標日期：${targetDate}\n` +
-    `符合條件：${targetCalls.length} 檔\n\n` +
-    `Tickers：${tickerPreview}\n\n` +
-    `即將分析前 ${config.MAX_SYMBOLS} 檔...`;
+    `查詢範圍：${startDate} ~ ${endDate}\n` +
+    `新增待分析：${newCalls.length} 檔\n\n` +
+    `Tickers：${tickerPreview}${newCalls.length > 20 ? '...' : ''}\n\n` +
+    `開始分析（每 ${config.BATCH_SIZE} 檔推送一次）...`;
 
   await pushMultipleTexts([listMessage]);
 
-  // 6. 逐檔分析
-  const results: SymbolAnalysis[] = [];
-  for (let i = 0; i < targetCalls.length; i++) {
-    const item = targetCalls[i]!;
+  // 6. 逐檔分析，每 BATCH_SIZE 個推送一次
+  const allResults: SymbolAnalysis[] = [];
+  let batchResults: SymbolAnalysis[] = [];
+  let batchNumber = 0;
+
+  for (let i = 0; i < newCalls.length; i++) {
+    const item = newCalls[i]!;
     logger.info(
-      { index: i + 1, total: targetCalls.length, symbol: item.symbol },
+      { index: i + 1, total: newCalls.length, symbol: item.symbol, date: item.date },
       '分析中'
     );
 
     const analysis = await analyzeSymbol(item);
-    results.push(analysis);
+    allResults.push(analysis);
+    batchResults.push(analysis);
+
+    // 每 BATCH_SIZE 個或最後一個時推送
+    if (batchResults.length >= config.BATCH_SIZE || i === newCalls.length - 1) {
+      batchNumber++;
+      const batchSuccessful = batchResults.filter(
+        (r) => r.status === 'BUY' || r.status === 'NO_ACTION'
+      );
+
+      if (batchSuccessful.length > 0) {
+        const batchScanResult = createBatchResult(
+          batchResults,
+          scannedAt,
+          batchNumber,
+          i + 1,
+          newCalls.length
+        );
+        const batchMessages = formatBatchResultMessages(batchScanResult);
+        await pushMultipleTexts(batchMessages);
+      } else {
+        // 這批全部都是 PENDING 或 ERROR
+        const pendingCount = batchResults.filter((r) => r.status === 'PENDING').length;
+        const errorCount = batchResults.filter((r) => r.status === 'ERROR').length;
+        logger.info(
+          { batchNumber, pending: pendingCount, error: errorCount },
+          '這批全部都是 PENDING/ERROR，不推播'
+        );
+      }
+
+      batchResults = [];
+    }
 
     // 延遲避免 rate limit
-    if (i < targetCalls.length - 1) {
+    if (i < newCalls.length - 1) {
       await delay(config.REQUEST_DELAY_MS);
     }
   }
 
-  // 7. 分類結果
-  const buyList = results.filter((r) => r.status === 'BUY');
-  const noActionList = results.filter((r) => r.status === 'NO_ACTION');
-  const pendingList = results.filter((r) => r.status === 'PENDING');
-  const errorList = results.filter((r) => r.status === 'ERROR');
+  // 7. 分類最終結果
+  const buyList = allResults.filter((r) => r.status === 'BUY');
+  const noActionList = allResults.filter((r) => r.status === 'NO_ACTION');
+  const pendingList = allResults.filter((r) => r.status === 'PENDING');
+  const errorList = allResults.filter((r) => r.status === 'ERROR');
+
+  // 使用最新日期作為 targetDate
+  const targetDate = newCalls[0]?.date || endDate;
 
   const scanResult: DailyScanResult = {
     targetDate,
     scannedAt,
-    totalSymbols: targetCalls.length,
-    analyzedCount: results.length,
+    totalSymbols: newCalls.length,
+    analyzedCount: allResults.length,
     buyCount: buyList.length,
     noActionCount: noActionList.length,
     pendingCount: pendingList.length,
@@ -212,12 +284,20 @@ export async function runDailyScan(): Promise<DailyScanResult | null> {
       pending: pendingList.length,
       error: errorList.length,
     },
-    '分析完成'
+    '全部分析完成'
   );
 
-  // 8. 推播結果訊息
-  const resultMessages = formatResultMessages(scanResult);
-  await pushMultipleTexts(resultMessages);
+  // 8. 推播最終摘要
+  const finalSummary =
+    `📊 Earnings Call 掃描完成\n\n` +
+    `查詢範圍：${startDate} ~ ${endDate}\n` +
+    `總共分析：${allResults.length} 檔\n\n` +
+    `✅ BUY：${buyList.length}\n` +
+    `⚪ NO ACTION：${noActionList.length}\n` +
+    `⏳ PENDING：${pendingList.length}\n` +
+    `❌ ERROR：${errorList.length}`;
+
+  await pushMultipleTexts([finalSummary]);
 
   logger.info('========================================');
 
@@ -225,9 +305,98 @@ export async function runDailyScan(): Promise<DailyScanResult | null> {
 }
 
 /**
- * 格式化結果訊息
+ * 批次結果結構
  */
-function formatResultMessages(result: DailyScanResult): string[] {
+interface BatchResult {
+  batchNumber: number;
+  currentIndex: number;
+  totalCount: number;
+  scannedAt: string;
+  results: SymbolAnalysis[];
+  buyList: SymbolAnalysis[];
+  noActionList: SymbolAnalysis[];
+  pendingList: SymbolAnalysis[];
+  errorList: SymbolAnalysis[];
+}
+
+/**
+ * 建立批次結果
+ */
+function createBatchResult(
+  results: SymbolAnalysis[],
+  scannedAt: string,
+  batchNumber: number,
+  currentIndex: number,
+  totalCount: number
+): BatchResult {
+  return {
+    batchNumber,
+    currentIndex,
+    totalCount,
+    scannedAt,
+    results,
+    buyList: results.filter((r) => r.status === 'BUY'),
+    noActionList: results.filter((r) => r.status === 'NO_ACTION'),
+    pendingList: results.filter((r) => r.status === 'PENDING'),
+    errorList: results.filter((r) => r.status === 'ERROR'),
+  };
+}
+
+/**
+ * 格式化批次結果訊息
+ */
+function formatBatchResultMessages(batch: BatchResult): string[] {
+  const messages: string[] = [];
+
+  let summary =
+    `📊 批次 #${batch.batchNumber} 分析結果\n` +
+    `進度：${batch.currentIndex}/${batch.totalCount}\n\n` +
+    `✅ BUY：${batch.buyList.length}\n` +
+    `⚪ NO ACTION：${batch.noActionList.length}\n` +
+    `⏳ PENDING：${batch.pendingList.length}\n` +
+    `❌ ERROR：${batch.errorList.length}`;
+
+  // BUY 清單
+  if (batch.buyList.length > 0) {
+    summary += `\n\n━━━━━━━━━━━━━━━━\n✅ BUY 建議\n━━━━━━━━━━━━━━━━`;
+
+    for (const item of batch.buyList) {
+      summary += `\n\n📈 ${item.symbol} (${item.date})`;
+      if (item.confidence != null) {
+        summary += ` ${formatConfidence(item.confidence)}`;
+      }
+      if (item.directionScore != null) {
+        summary += ` [D${item.directionScore}]`;
+      }
+      summary += `\n${item.company}`;
+
+      // 顯示前 2 條理由
+      if (item.reasons && item.reasons.length > 0) {
+        const topReasons = item.reasons.slice(0, 2);
+        for (const reason of topReasons) {
+          const truncated =
+            reason.length > 80 ? reason.slice(0, 80) + '...' : reason;
+          summary += `\n• ${truncated}`;
+        }
+      }
+    }
+  }
+
+  // NO ACTION 清單（簡短顯示）
+  if (batch.noActionList.length > 0) {
+    const noActionSymbols = batch.noActionList.map((r) => r.symbol).join(', ');
+    summary += `\n\n⚪ NO ACTION: ${noActionSymbols}`;
+  }
+
+  messages.push(summary);
+
+  return messages;
+}
+
+/**
+ * 格式化結果訊息（完整版，供外部使用）
+ */
+export function formatResultMessages(result: DailyScanResult): string[] {
   const messages: string[] = [];
 
   // 摘要訊息

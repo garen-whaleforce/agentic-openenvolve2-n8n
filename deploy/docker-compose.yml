@@ -1,0 +1,121 @@
+# ============================================
+# Earnings Call Analysis System - Docker Compose
+# 部署於 172.23.22.100 (gpu5090)
+# ============================================
+# Ports:
+#   - Backend:  9100
+#   - Frontend: 9101
+#   - Notifier: 9102
+# ============================================
+
+version: "3.9"
+
+services:
+  # ============================================
+  # Backend - FastAPI (Python)
+  # ============================================
+  backend:
+    build:
+      context: ..
+      dockerfile: Dockerfile
+    container_name: earnings-backend
+    network_mode: host
+    restart: unless-stopped
+    environment:
+      PORT: "9100"
+      # FMP API
+      FMP_API_KEY: "${FMP_API_KEY}"
+      FMP_BASE_URL: "https://financialmodelingprep.com/stable"
+      # LiteLLM (禁用 SSL 驗證，內網自簽憑證)
+      LITELLM_ENDPOINT: "https://litellm.whaleforce.dev"
+      LITELLM_API_KEY: "${LITELLM_API_KEY}"
+      OPENAI_VERIFY_SSL: "false"
+      HTTPX_SSL_VERIFY: "false"
+      SSL_CERT_FILE: ""
+      REQUESTS_CA_BUNDLE: ""
+      MAIN_MODEL: "cli-gpt-5.2"
+      HELPER_MODEL: "cli-gpt-5.2"
+      # Neo4j (內網)
+      NEO4J_URI: "bolt://172.23.22.100:7687"
+      NEO4J_USERNAME: "neo4j"
+      NEO4J_PASSWORD: "${NEO4J_PASSWORD}"
+      NEO4J_DATABASE: "neo4j"
+      # 使用 SQLite 作為分析結果儲存 (whaleforce 帳號只有讀取權限)
+      ANALYSIS_DB_PATH: "/app/data/analysis_results.db"
+      # 使用 MinIO 作為 Cache (取代 Redis)
+      CACHE_BACKEND: "minio"
+      # Whaleforce Services
+      SEC_FILINGS_API_URL: "http://172.23.22.100:8001"
+      BACKTESTER_API_URL: "https://backtest.api.whaleforce.dev"
+      PERFORMANCE_METRICS_API_URL: "http://172.23.22.100:8100"
+      # MinIO (內網，用於 Cache 和檔案儲存)
+      MINIO_ENDPOINT: "https://minio.api.gpu5090.whaleforce.dev"
+      MINIO_ACCESS_KEY: "whaleforce"
+      MINIO_SECRET_KEY: "whaleforce.ai"
+      MINIO_BUCKET: "earnings-analysis"
+    volumes:
+      - earnings-data:/app/data
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:9100/api/earnings-calendar/today || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+  # ============================================
+  # Frontend - Next.js
+  # ============================================
+  frontend:
+    build:
+      context: ../frontend
+      dockerfile: Dockerfile
+    container_name: earnings-frontend
+    network_mode: host
+    restart: unless-stopped
+    environment:
+      PORT: "9101"
+      ANALYSIS_API_BASE: "http://127.0.0.1:9100"
+      DEFAULT_MIN_MARKET_CAP: "1000000000"
+    depends_on:
+      - backend
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:9101/ || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+
+  # ============================================
+  # Notifier - LINE Push (Node.js)
+  # ============================================
+  notifier:
+    build:
+      context: ../notifier
+      dockerfile: Dockerfile
+    container_name: earnings-notifier
+    network_mode: host
+    restart: unless-stopped
+    environment:
+      PORT: "9102"
+      ANALYSIS_API_BASE: "http://127.0.0.1:9100"
+      LINE_CHANNEL_ACCESS_TOKEN: "${LINE_CHANNEL_ACCESS_TOKEN}"
+      LINE_TO: "${LINE_TO}"
+      ADMIN_TOKEN: "${ADMIN_TOKEN}"
+      MIN_MARKET_CAP: "100000000"
+      MAX_SYMBOLS: "100"
+      BATCH_SIZE: "5"
+      LOOKBACK_DAYS: "7"
+      CONF_THRESHOLD: "0.65"
+      REQUEST_DELAY_MS: "300"
+      LOG_LEVEL: "info"
+    depends_on:
+      - backend
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:9102/healthz || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+volumes:
+  earnings-data:

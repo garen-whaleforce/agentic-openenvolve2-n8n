@@ -3,6 +3,7 @@
  */
 
 import cron from 'node-cron';
+import { DateTime } from 'luxon';
 import { CRON_SCHEDULE, EASTERN_TIMEZONE } from './config.js';
 import logger from './logger.js';
 import { runDailyScan } from './runner.js';
@@ -58,7 +59,6 @@ export function stopScheduler(): void {
  * 取得下次執行時間
  */
 export function getNextRunTime(): string {
-  const { DateTime } = require('luxon');
   const now = DateTime.now().setZone(EASTERN_TIMEZONE);
 
   // 今天 06:00
