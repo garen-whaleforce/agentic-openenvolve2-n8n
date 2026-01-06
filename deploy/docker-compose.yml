@@ -105,9 +105,17 @@ services:
       MAX_SYMBOLS: "100"
       BATCH_SIZE: "5"
       LOOKBACK_DAYS: "7"
+      # 主掃描偏移天數：掃描 3-10 天前的資料，確保 FMP transcript 已上傳
+      SCAN_OFFSET_DAYS: "3"
+      # 重試佇列最大保留天數
+      RETRY_MAX_DAYS: "14"
+      # 待分析佇列存儲目錄
+      DATA_DIR: "/app/data"
       CONF_THRESHOLD: "0.65"
       REQUEST_DELAY_MS: "300"
       LOG_LEVEL: "info"
+    volumes:
+      - notifier-data:/app/data
     depends_on:
       - backend
     healthcheck:
@@ -119,3 +127,4 @@ services:
 
 volumes:
   earnings-data:
+  notifier-data:
