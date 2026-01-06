@@ -9,8 +9,17 @@ import time
 from pathlib import Path
 from typing import Dict, Tuple, Callable, TypeVar, Any
 
+import httpx
 from langchain_openai import OpenAIEmbeddings, AzureOpenAIEmbeddings
 from openai import AzureOpenAI, OpenAI
+
+# SSL verification bypass for internal LiteLLM proxy (self-signed cert)
+_SSL_VERIFY = os.getenv("OPENAI_VERIFY_SSL", "true").lower() != "false"
+if not _SSL_VERIFY:
+    _transport = httpx.HTTPTransport(verify=False)
+    _http_client = httpx.Client(transport=_transport)
+else:
+    _http_client = None
 
 DEFAULT_AZURE_VERSION = "2024-12-01-preview"
 
@@ -159,7 +168,11 @@ def build_chat_client(
 
     if api_base and api_key:
         # Use LiteLLM or custom OpenAI-compatible endpoint
-        return OpenAI(api_key=api_key, base_url=api_base), requested_model
+        # Pass http_client if SSL verify is disabled (for self-signed certs)
+        client_kwargs = {"api_key": api_key, "base_url": api_base}
+        if _http_client is not None:
+            client_kwargs["http_client"] = _http_client
+        return OpenAI(**client_kwargs), requested_model
 
     if prefer_openai:
         if not api_key:
@@ -240,7 +253,10 @@ def build_embedding_client(
     api_key = creds.get("openai_api_key") or os.getenv("LITELLM_API_KEY") or os.getenv("OPENAI_API_KEY")
 
     if api_base and api_key:
-        return OpenAI(api_key=api_key, base_url=api_base), "text-embedding-ada"
+        client_kwargs = {"api_key": api_key, "base_url": api_base}
+        if _http_client is not None:
+            client_kwargs["http_client"] = _http_client
+        return OpenAI(**client_kwargs), "text-embedding-ada"
 
     if prefer_openai:
         if not api_key:
@@ -273,7 +289,10 @@ def build_litellm_client(requested_model: str) -> Tuple[OpenAI, str]:
     api_key = os.getenv("LITELLM_API_KEY")
     if not api_base or not api_key:
         raise RuntimeError("LiteLLM not configured (missing LITELLM_ENDPOINT or LITELLM_API_KEY)")
-    return OpenAI(api_key=api_key, base_url=api_base), requested_model
+    client_kwargs = {"api_key": api_key, "base_url": api_base}
+    if _http_client is not None:
+        client_kwargs["http_client"] = _http_client
+    return OpenAI(**client_kwargs), requested_model
 
 
 class AzureGPT5ChatCompletions:

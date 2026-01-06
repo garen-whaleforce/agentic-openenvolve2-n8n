@@ -16,7 +16,8 @@ fi
 
 cat > "$CRED_PATH" <<EOF
 {
-  "openai_api_key": "${OPENAI_API_KEY:-}",
+  "openai_api_key": "${LITELLM_API_KEY:-${OPENAI_API_KEY:-}}",
+  "openai_api_base": "${LITELLM_ENDPOINT:-}",
   "neo4j_uri": "${NEO4J_URI:-}",
   "neo4j_username": "${NEO4J_USERNAME:-}",
   "neo4j_password": "${NEO4J_PASSWORD:-}",
