@@ -35,6 +35,10 @@ COPY --from=builder /app/package*.json ./
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/node_modules ./node_modules
 
+# 建立資料目錄（用於存儲待分析佇列）
+RUN mkdir -p /app/data && chown -R node:node /app/data
+VOLUME ["/app/data"]
+
 # 暴露埠號（實際 port 由 PORT 環境變數決定）
 EXPOSE 3000
 

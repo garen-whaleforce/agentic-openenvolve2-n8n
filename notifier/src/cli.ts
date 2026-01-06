@@ -5,7 +5,8 @@
 import { logConfigSummary } from './config.js';
 import logger from './logger.js';
 import { sendTestMessage } from './line.js';
-import { runDailyScan } from './runner.js';
+import { runDailyScan, runRetryQueue } from './runner.js';
+import { getQueueStats, loadQueue } from './pendingQueue.js';
 
 /**
  * 取得命令
@@ -64,6 +65,63 @@ async function runOnce(): Promise<void> {
 }
 
 /**
+ * 執行重試佇列
+ */
+async function runRetry(): Promise<void> {
+  console.log('');
+  console.log('🔄 執行重試佇列...');
+  console.log('');
+  logConfigSummary();
+  console.log('');
+
+  const result = await runRetryQueue();
+
+  if (result) {
+    console.log('');
+    console.log('✅ 重試完成！');
+    console.log(`   處理檔數：${result.processedCount}`);
+    console.log(`   成功分析：${result.successCount}`);
+    console.log(`   仍等待中：${result.stillPendingCount}`);
+    console.log(`   已過期清除：${result.expiredCount}`);
+    console.log(`   BUY：${result.buyList.length}`);
+  } else {
+    console.log('');
+    console.log('⚠️ 待分析佇列為空');
+  }
+}
+
+/**
+ * 顯示佇列狀態
+ */
+function showQueueStatus(): void {
+  console.log('');
+  console.log('📋 待分析佇列狀態');
+  console.log('');
+
+  const stats = getQueueStats();
+
+  if (stats.totalCount === 0) {
+    console.log('   佇列為空');
+  } else {
+    console.log(`   項目數量：${stats.totalCount}`);
+    console.log(`   最早日期：${stats.oldestDate}`);
+    console.log(`   最新日期：${stats.newestDate}`);
+    console.log(`   平均重試：${stats.avgRetryCount.toFixed(1)} 次`);
+
+    console.log('');
+    console.log('   詳細清單：');
+    const queue = loadQueue();
+    for (const item of queue.slice(0, 20)) {
+      console.log(`   - ${item.symbol} (${item.date}) 重試 ${item.retryCount} 次`);
+    }
+    if (queue.length > 20) {
+      console.log(`   ... 還有 ${queue.length - 20} 項`);
+    }
+  }
+  console.log('');
+}
+
+/**
  * 顯示使用說明
  */
 function showHelp(): void {
@@ -73,10 +131,14 @@ function showHelp(): void {
   console.log('Usage:');
   console.log('  npm run test:line   - 發送 LINE 測試訊息');
   console.log('  npm run run:once    - 立即執行一次每日掃描');
+  console.log('  npm run retry       - 立即執行重試佇列');
+  console.log('  npm run queue       - 顯示待分析佇列狀態');
   console.log('');
   console.log('或直接執行：');
   console.log('  tsx src/cli.ts test-line');
   console.log('  tsx src/cli.ts run-once');
+  console.log('  tsx src/cli.ts retry');
+  console.log('  tsx src/cli.ts queue');
   console.log('');
 }
 
@@ -93,6 +155,14 @@ async function main(): Promise<void> {
 
     case 'run-once':
       await runOnce();
+      break;
+
+    case 'retry':
+      await runRetry();
+      break;
+
+    case 'queue':
+      showQueueStatus();
       break;
 
     case 'help':

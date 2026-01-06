@@ -19,6 +19,15 @@ import type {
   DailyScanResult,
   AnalysisStatus,
 } from './types.js';
+import {
+  loadQueue,
+  addToQueue,
+  removeFromQueue,
+  updateRetryCount,
+  cleanupExpiredItems,
+  getQueueStats,
+  type PendingItem,
+} from './pendingQueue.js';
 
 /**
  * 延遲函式
@@ -41,16 +50,24 @@ export interface ScanOptions {
 
 /**
  * 計算日期範圍
+ * @param options 掃描選項
+ * @param useOffset 是否使用 SCAN_OFFSET_DAYS 偏移（主掃描用）
  */
-function getDateRange(options?: ScanOptions): { startDate: string; endDate: string } {
+function getDateRange(
+  options?: ScanOptions,
+  useOffset: boolean = true
+): { startDate: string; endDate: string } {
   const lookbackDays = options?.lookbackDays ?? config.LOOKBACK_DAYS;
+  const offsetDays = useOffset ? config.SCAN_OFFSET_DAYS : 0;
 
   let endDateTime: DateTime;
   if (options?.endDate) {
     endDateTime = DateTime.fromISO(options.endDate, { zone: EASTERN_TIMEZONE });
   } else {
     const now = DateTime.now().setZone(EASTERN_TIMEZONE);
-    endDateTime = now.minus({ days: 1 });
+    // 主掃描：掃描 (今天 - offsetDays) 之前的資料
+    // 例如 offsetDays=3，lookbackDays=7，則掃描 3-10 天前
+    endDateTime = now.minus({ days: 1 + offsetDays });
   }
 
   const startDateTime = endDateTime.minus({ days: lookbackDays - 1 });
@@ -62,9 +79,57 @@ function getDateRange(options?: ScanOptions): { startDate: string; endDate: stri
 }
 
 /**
+ * 封閉式基金關鍵字列表（這些通常沒有 earnings call transcript）
+ */
+const CLOSED_END_FUND_KEYWORDS = [
+  'fund',
+  'income fund',
+  'municipal',
+  'preferred',
+  'opportunities fund',
+  'credit fund',
+  'value fund',
+];
+
+/**
+ * 判斷是否為封閉式基金（通常沒有 transcript）
+ */
+function isClosedEndFund(item: EarningsCallItem): boolean {
+  const companyLower = (item.company || '').toLowerCase();
+  const sectorLower = (item.sector || '').toLowerCase();
+
+  // 檢查是否為金融服務業的基金類型
+  if (sectorLower === 'financial services') {
+    for (const keyword of CLOSED_END_FUND_KEYWORDS) {
+      if (companyLower.includes(keyword)) {
+        return true;
+      }
+    }
+  }
+
+  // Nuveen 系列基金
+  if (companyLower.startsWith('nuveen ')) {
+    return true;
+  }
+
+  // Abrdn 系列基金
+  if (companyLower.startsWith('abrdn ')) {
+    return true;
+  }
+
+  // First Trust 基金
+  if (companyLower.includes('first trust') && companyLower.includes('fund')) {
+    return true;
+  }
+
+  return false;
+}
+
+/**
  * 過濾出尚未分析的 Earnings Calls
  * @param calls 所有 Earnings Calls
  * @param analyzedSet 已分析過的 symbol+date 集合
+ * @param excludeClosedEndFunds 是否排除封閉式基金
  *
  * 排序邏輯：
  * 1. 先按日期降序（最新優先）
@@ -74,10 +139,22 @@ function getDateRange(options?: ScanOptions): { startDate: string; endDate: stri
  */
 function filterNewCalls(
   calls: EarningsCallItem[],
-  analyzedSet: Set<string>
+  analyzedSet: Set<string>,
+  excludeClosedEndFunds: boolean = true
 ): EarningsCallItem[] {
-  return calls
-    .filter((c) => !analyzedSet.has(`${c.symbol}:${c.date}`))
+  let filtered = calls.filter((c) => !analyzedSet.has(`${c.symbol}:${c.date}`));
+
+  // 排除封閉式基金
+  if (excludeClosedEndFunds) {
+    const beforeCount = filtered.length;
+    filtered = filtered.filter((c) => !isClosedEndFund(c));
+    const excludedCount = beforeCount - filtered.length;
+    if (excludedCount > 0) {
+      logger.info({ excludedCount }, '排除封閉式基金（通常無 transcript）');
+    }
+  }
+
+  return filtered
     .sort((a, b) => {
       // 先按日期降序（最新優先）
       const dateCompare = b.date.localeCompare(a.date);
@@ -287,15 +364,32 @@ export async function runDailyScan(options?: ScanOptions): Promise<DailyScanResu
     '全部分析完成'
   );
 
-  // 8. 推播最終摘要
-  const finalSummary =
+  // 8. 將 PENDING 項目加入待分析佇列
+  if (pendingList.length > 0) {
+    const pendingCalls: EarningsCallItem[] = pendingList.map((p) => ({
+      symbol: p.symbol,
+      company: p.company,
+      date: p.date,
+    }));
+    const addedCount = addToQueue(pendingCalls);
+    logger.info({ addedCount, pendingCount: pendingList.length }, 'PENDING 項目加入待分析佇列');
+  }
+
+  // 9. 推播最終摘要
+  const queueStats = getQueueStats();
+  let finalSummary =
     `📊 Earnings Call 掃描完成\n\n` +
     `查詢範圍：${startDate} ~ ${endDate}\n` +
+    `（偏移 ${config.SCAN_OFFSET_DAYS} 天，確保 transcript 已上傳）\n` +
     `總共分析：${allResults.length} 檔\n\n` +
     `✅ BUY：${buyList.length}\n` +
     `⚪ NO ACTION：${noActionList.length}\n` +
     `⏳ PENDING：${pendingList.length}\n` +
     `❌ ERROR：${errorList.length}`;
+
+  if (queueStats.totalCount > 0) {
+    finalSummary += `\n\n📋 待分析佇列：${queueStats.totalCount} 檔`;
+  }
 
   await pushMultipleTexts([finalSummary]);
 
@@ -473,4 +567,146 @@ export function formatResultMessages(result: DailyScanResult): string[] {
   );
 
   return messages;
+}
+
+/**
+ * 重試佇列結果
+ */
+export interface RetryQueueResult {
+  processedCount: number;
+  successCount: number;
+  stillPendingCount: number;
+  expiredCount: number;
+  buyList: SymbolAnalysis[];
+  noActionList: SymbolAnalysis[];
+}
+
+/**
+ * 執行待分析佇列重試
+ * 檢查佇列中的項目，嘗試分析那些可能已經有 transcript 的
+ */
+export async function runRetryQueue(): Promise<RetryQueueResult | null> {
+  const now = DateTime.now().setZone(EASTERN_TIMEZONE);
+  const scannedAt = now.toFormat('yyyy-MM-dd HH:mm:ss');
+
+  logger.info('========================================');
+  logger.info({ time: scannedAt }, '開始重試待分析佇列');
+
+  // 1. 清理過期項目
+  const expiredCount = cleanupExpiredItems();
+
+  // 2. 載入佇列
+  const queue = loadQueue();
+  if (queue.length === 0) {
+    logger.info('待分析佇列為空，跳過重試');
+    logger.info('========================================');
+    return null;
+  }
+
+  logger.info({ queueSize: queue.length }, '待分析佇列項目數');
+
+  // 3. 逐個重試
+  const successItems: SymbolAnalysis[] = [];
+  const stillPendingItems: PendingItem[] = [];
+
+  for (const item of queue) {
+    logger.info(
+      { symbol: item.symbol, date: item.date, retryCount: item.retryCount },
+      '重試分析'
+    );
+
+    const analysis = await analyzeSymbol(item);
+
+    if (analysis.status === 'PENDING') {
+      // 仍然沒有 transcript
+      updateRetryCount(item.symbol, item.date);
+      stillPendingItems.push(item);
+    } else {
+      // 成功分析（BUY, NO_ACTION, 或 ERROR）
+      successItems.push(analysis);
+    }
+
+    // 延遲避免 rate limit
+    await delay(config.REQUEST_DELAY_MS);
+  }
+
+  // 4. 從佇列移除成功分析的項目
+  if (successItems.length > 0) {
+    removeFromQueue(
+      successItems.map((s) => ({ symbol: s.symbol, date: s.date }))
+    );
+  }
+
+  // 5. 分類結果
+  const buyList = successItems.filter((r) => r.status === 'BUY');
+  const noActionList = successItems.filter((r) => r.status === 'NO_ACTION');
+
+  const result: RetryQueueResult = {
+    processedCount: queue.length,
+    successCount: successItems.length,
+    stillPendingCount: stillPendingItems.length,
+    expiredCount,
+    buyList,
+    noActionList,
+  };
+
+  logger.info(
+    {
+      processed: result.processedCount,
+      success: result.successCount,
+      stillPending: result.stillPendingCount,
+      expired: result.expiredCount,
+      buy: buyList.length,
+    },
+    '重試佇列處理完成'
+  );
+
+  // 6. 如果有 BUY 訊號，推播通知
+  if (buyList.length > 0) {
+    let message =
+      `🔄 重試佇列分析結果\n\n` +
+      `處理：${result.processedCount} 檔\n` +
+      `成功：${result.successCount} 檔\n` +
+      `仍等待：${result.stillPendingCount} 檔\n\n` +
+      `✅ BUY：${buyList.length}\n` +
+      `⚪ NO ACTION：${noActionList.length}`;
+
+    message += `\n\n━━━━━━━━━━━━━━━━\n✅ BUY 建議\n━━━━━━━━━━━━━━━━`;
+
+    for (const item of buyList) {
+      message += `\n\n📈 ${item.symbol} (${item.date})`;
+      if (item.confidence != null) {
+        message += ` ${formatConfidence(item.confidence)}`;
+      }
+      if (item.directionScore != null) {
+        message += ` [D${item.directionScore}]`;
+      }
+      message += `\n${item.company}`;
+
+      if (item.reasons && item.reasons.length > 0) {
+        const topReasons = item.reasons.slice(0, 2);
+        for (const reason of topReasons) {
+          const truncated =
+            reason.length > 80 ? reason.slice(0, 80) + '...' : reason;
+          message += `\n• ${truncated}`;
+        }
+      }
+    }
+
+    await pushMultipleTexts([message]);
+  } else if (result.successCount > 0) {
+    // 有成功分析但沒有 BUY
+    const message =
+      `🔄 重試佇列分析結果\n\n` +
+      `處理：${result.processedCount} 檔\n` +
+      `成功：${result.successCount} 檔\n` +
+      `仍等待：${result.stillPendingCount} 檔\n\n` +
+      `⚪ 無 BUY 訊號`;
+
+    await pushMultipleTexts([message]);
+  }
+
+  logger.info('========================================');
+
+  return result;
 }

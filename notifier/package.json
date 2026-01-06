@@ -9,6 +9,8 @@
     "start": "node dist/index.js",
     "test:line": "tsx src/cli.ts test-line",
     "run:once": "tsx src/cli.ts run-once",
+    "retry": "tsx src/cli.ts retry",
+    "queue": "tsx src/cli.ts queue",
     "lint": "eslint src --ext .ts"
   },
   "dependencies": {

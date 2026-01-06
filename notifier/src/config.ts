@@ -44,6 +44,21 @@ const envSchema = z.object({
     .string()
     .default('7')
     .transform((v) => parseInt(v, 10)),
+  // 主掃描偏移天數：掃描 (今天 - SCAN_OFFSET_DAYS) 到 (今天 - SCAN_OFFSET_DAYS - LOOKBACK_DAYS) 的資料
+  // 設為 3 表示掃描 3-10 天前的資料，確保 FMP transcript 已上傳
+  SCAN_OFFSET_DAYS: z
+    .string()
+    .default('3')
+    .transform((v) => parseInt(v, 10)),
+  // 重試佇列最大保留天數
+  RETRY_MAX_DAYS: z
+    .string()
+    .default('14')
+    .transform((v) => parseInt(v, 10)),
+  // 資料存儲目錄
+  DATA_DIR: z
+    .string()
+    .default('/app/data'),
   CONF_THRESHOLD: z
     .string()
     .default('0.65')
@@ -109,6 +124,9 @@ export function logConfigSummary(): void {
   console.log(`   - MAX_SYMBOLS: ${config.MAX_SYMBOLS}`);
   console.log(`   - BATCH_SIZE: ${config.BATCH_SIZE}`);
   console.log(`   - LOOKBACK_DAYS: ${config.LOOKBACK_DAYS}`);
+  console.log(`   - SCAN_OFFSET_DAYS: ${config.SCAN_OFFSET_DAYS}`);
+  console.log(`   - RETRY_MAX_DAYS: ${config.RETRY_MAX_DAYS}`);
+  console.log(`   - DATA_DIR: ${config.DATA_DIR}`);
   console.log(`   - CONF_THRESHOLD: ${(config.CONF_THRESHOLD * 100).toFixed(0)}%`);
   console.log(`   - REQUEST_DELAY_MS: ${config.REQUEST_DELAY_MS}ms`);
   console.log(`   - PORT: ${config.PORT}`);
