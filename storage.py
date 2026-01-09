@@ -33,11 +33,25 @@ class DateAwareEncoder(json.JSONEncoder):
 
 
 def _get_db_config():
-    """Lazy initialization of DB config to allow dotenv to load first."""
-    pg_dsn = os.getenv("POSTGRES_DSN")
-    if pg_dsn:
-        return "postgres", pg_dsn, None
-    db_path = Path(os.getenv("ANALYSIS_DB_PATH", "data/analysis_results.db"))
+    """Lazy initialization of DB config to allow dotenv to load first.
+
+    ANALYSIS_DB_PATH is the primary setting - if set, use SQLite.
+    This avoids permission issues with PostgreSQL (read-only account).
+    """
+    # Prefer SQLite for analysis results storage (avoid PG permission issues)
+    db_path_str = os.getenv("ANALYSIS_DB_PATH")
+    if db_path_str:
+        db_path = Path(db_path_str)
+        db_path.parent.mkdir(parents=True, exist_ok=True)
+        return "sqlite", None, db_path
+
+    # Fallback: check for explicit storage DSN (separate from data-source DSN)
+    storage_dsn = os.getenv("STORAGE_DSN")
+    if storage_dsn:
+        return "postgres", storage_dsn, None
+
+    # Default to SQLite
+    db_path = Path("data/analysis_results.db")
     db_path.parent.mkdir(parents=True, exist_ok=True)
     return "sqlite", None, db_path
 
