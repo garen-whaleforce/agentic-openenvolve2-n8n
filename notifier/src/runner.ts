@@ -40,34 +40,38 @@ function delay(ms: number): Promise<void> {
  * 掃描選項
  */
 export interface ScanOptions {
-  /** 指定結束日期 (YYYY-MM-DD)，預設為昨天 */
-  endDate?: string;
-  /** 回顧天數，預設使用 config.LOOKBACK_DAYS */
+  /** 指定日期 (YYYY-MM-DD)，預設為今天 */
+  targetDate?: string;
+  /** 回顧天數（用於 range 模式），預設使用 config.LOOKBACK_DAYS */
   lookbackDays?: number;
   /** 是否跳過去重檢查（強制重新分析） */
   skipDedup?: boolean;
+  /** 是否使用範圍模式（掃描多天），預設為 false（只掃描單天） */
+  useRangeMode?: boolean;
 }
 
 /**
- * 計算日期範圍
+ * 取得今天的日期（美東時間）
+ */
+function getTodayDate(): string {
+  const now = DateTime.now().setZone(EASTERN_TIMEZONE);
+  return now.toFormat(DATE_FORMAT);
+}
+
+/**
+ * 計算日期範圍（用於 range 模式）
  * @param options 掃描選項
- * @param useOffset 是否使用 SCAN_OFFSET_DAYS 偏移（主掃描用）
  */
 function getDateRange(
-  options?: ScanOptions,
-  useOffset: boolean = true
+  options?: ScanOptions
 ): { startDate: string; endDate: string } {
   const lookbackDays = options?.lookbackDays ?? config.LOOKBACK_DAYS;
-  const offsetDays = useOffset ? config.SCAN_OFFSET_DAYS : 0;
 
   let endDateTime: DateTime;
-  if (options?.endDate) {
-    endDateTime = DateTime.fromISO(options.endDate, { zone: EASTERN_TIMEZONE });
+  if (options?.targetDate) {
+    endDateTime = DateTime.fromISO(options.targetDate, { zone: EASTERN_TIMEZONE });
   } else {
-    const now = DateTime.now().setZone(EASTERN_TIMEZONE);
-    // 主掃描：掃描 (今天 - offsetDays) 之前的資料
-    // 例如 offsetDays=3，lookbackDays=7，則掃描 3-10 天前
-    endDateTime = now.minus({ days: 1 + offsetDays });
+    endDateTime = DateTime.now().setZone(EASTERN_TIMEZONE);
   }
 
   const startDateTime = endDateTime.minus({ days: lookbackDays - 1 });
@@ -206,8 +210,8 @@ async function analyzeSymbol(
 
 /**
  * 執行每日掃描
- * 掃描過去 LOOKBACK_DAYS 天的 earnings，只分析尚未分析過的新 transcript
- * @param options 掃描選項（可指定日期範圍）
+ * 掃描今天（或指定日期）的 earnings transcripts，分析尚未分析過的
+ * @param options 掃描選項（可指定日期）
  */
 export async function runDailyScan(options?: ScanOptions): Promise<DailyScanResult | null> {
   const now = DateTime.now().setZone(EASTERN_TIMEZONE);
@@ -216,12 +220,25 @@ export async function runDailyScan(options?: ScanOptions): Promise<DailyScanResu
   logger.info('========================================');
   logger.info({ time: scannedAt, options }, '開始每日掃描');
 
-  // 1. 計算日期範圍
-  const { startDate, endDate } = getDateRange(options);
-  const lookbackDays = options?.lookbackDays ?? config.LOOKBACK_DAYS;
-  logger.info({ startDate, endDate, lookbackDays }, '日期範圍');
+  // 1. 決定掃描日期
+  let startDate: string;
+  let endDate: string;
 
-  // 2. 取得 Earnings 清單
+  if (options?.useRangeMode) {
+    // Range 模式：掃描多天
+    const range = getDateRange(options);
+    startDate = range.startDate;
+    endDate = range.endDate;
+    logger.info({ startDate, endDate, lookbackDays: options?.lookbackDays ?? config.LOOKBACK_DAYS }, '日期範圍模式');
+  } else {
+    // 單日模式：只掃描今天（或指定日期）
+    const targetDate = options?.targetDate ?? getTodayDate();
+    startDate = targetDate;
+    endDate = targetDate;
+    logger.info({ targetDate }, '單日掃描模式');
+  }
+
+  // 2. 取得 Earnings 清單（從 DB 取得有 transcript 的記錄）
   let allCalls: EarningsCallItem[];
   try {
     allCalls = await fetchEarningsRange(startDate, endDate);
@@ -236,7 +253,7 @@ export async function runDailyScan(options?: ScanOptions): Promise<DailyScanResu
     return null;
   }
 
-  logger.info({ total: allCalls.length }, '符合市值條件的 Earnings Calls');
+  logger.info({ total: allCalls.length, date: startDate === endDate ? startDate : `${startDate} ~ ${endDate}` }, '找到的 Earnings Transcripts');
 
   // 3. 取得已分析過的記錄（除非 skipDedup）
   let analyzedSet: Set<string>;
@@ -268,10 +285,11 @@ export async function runDailyScan(options?: ScanOptions): Promise<DailyScanResu
 
   // 5. 推播清單訊息
   const tickerPreview = newCalls.slice(0, 20).map((c) => `${c.symbol}(${c.date})`).join(', ');
+  const dateDisplay = startDate === endDate ? startDate : `${startDate} ~ ${endDate}`;
   const listMessage =
     `📅 Earnings Call 新增掃描\n\n` +
     `美東時間：${scannedAt}\n` +
-    `查詢範圍：${startDate} ~ ${endDate}\n` +
+    `查詢日期：${dateDisplay}\n` +
     `新增待分析：${newCalls.length} 檔\n\n` +
     `Tickers：${tickerPreview}${newCalls.length > 20 ? '...' : ''}\n\n` +
     `開始分析（每 ${config.BATCH_SIZE} 檔推送一次）...`;
@@ -377,10 +395,10 @@ export async function runDailyScan(options?: ScanOptions): Promise<DailyScanResu
 
   // 9. 推播最終摘要
   const queueStats = getQueueStats();
+  const finalDateDisplay = startDate === endDate ? startDate : `${startDate} ~ ${endDate}`;
   let finalSummary =
     `📊 Earnings Call 掃描完成\n\n` +
-    `查詢範圍：${startDate} ~ ${endDate}\n` +
-    `（偏移 ${config.SCAN_OFFSET_DAYS} 天，確保 transcript 已上傳）\n` +
+    `查詢日期：${finalDateDisplay}\n` +
     `總共分析：${allResults.length} 檔\n\n` +
     `✅ BUY：${buyList.length}\n` +
     `⚪ NO ACTION：${noActionList.length}\n` +

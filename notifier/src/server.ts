@@ -86,20 +86,22 @@ app.post('/admin/test-line', adminAuth, async (req: Request, res: Response) => {
  * 手動觸發每日掃描
  * POST /admin/run-scan
  * Headers: x-admin-token: {ADMIN_TOKEN}
- * Body (optional): { "endDate": "2025-11-30", "lookbackDays": 7, "skipDedup": true }
+ * Body (optional): { "targetDate": "2025-11-30", "lookbackDays": 7, "skipDedup": true, "useRangeMode": false }
  */
 app.post('/admin/run-scan', adminAuth, async (req: Request, res: Response) => {
   try {
-    const { endDate, lookbackDays, skipDedup } = req.body as {
-      endDate?: string;
+    const { targetDate, lookbackDays, skipDedup, useRangeMode } = req.body as {
+      targetDate?: string;
       lookbackDays?: number;
       skipDedup?: boolean;
+      useRangeMode?: boolean;
     };
 
     const options: ScanOptions = {};
-    if (endDate) options.endDate = endDate;
+    if (targetDate) options.targetDate = targetDate;
     if (lookbackDays) options.lookbackDays = lookbackDays;
     if (skipDedup) options.skipDedup = skipDedup;
+    if (useRangeMode) options.useRangeMode = useRangeMode;
 
     logger.info({ options }, '手動觸發每日掃描...');
 

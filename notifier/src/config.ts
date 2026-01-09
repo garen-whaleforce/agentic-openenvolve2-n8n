@@ -44,11 +44,11 @@ const envSchema = z.object({
     .string()
     .default('7')
     .transform((v) => parseInt(v, 10)),
-  // 主掃描偏移天數：掃描 (今天 - SCAN_OFFSET_DAYS) 到 (今天 - SCAN_OFFSET_DAYS - LOOKBACK_DAYS) 的資料
-  // 設為 0 表示掃描最新資料（現在使用 DB 作為資料源，transcript 已即時可用）
+  // 已棄用：現在預設掃描今天的 transcript（DB 資料源即時可用）
+  // 保留此設定以向後兼容，但不再使用
   SCAN_OFFSET_DAYS: z
     .string()
-    .default('3')
+    .default('0')
     .transform((v) => parseInt(v, 10)),
   // 重試佇列最大保留天數
   RETRY_MAX_DAYS: z
@@ -123,8 +123,7 @@ export function logConfigSummary(): void {
   console.log(`   - MIN_MARKET_CAP: ${(config.MIN_MARKET_CAP / 1e9).toFixed(1)}B`);
   console.log(`   - MAX_SYMBOLS: ${config.MAX_SYMBOLS}`);
   console.log(`   - BATCH_SIZE: ${config.BATCH_SIZE}`);
-  console.log(`   - LOOKBACK_DAYS: ${config.LOOKBACK_DAYS}`);
-  console.log(`   - SCAN_OFFSET_DAYS: ${config.SCAN_OFFSET_DAYS}`);
+  console.log(`   - LOOKBACK_DAYS: ${config.LOOKBACK_DAYS} (用於 range 模式)`);
   console.log(`   - RETRY_MAX_DAYS: ${config.RETRY_MAX_DAYS}`);
   console.log(`   - DATA_DIR: ${config.DATA_DIR}`);
   console.log(`   - CONF_THRESHOLD: ${(config.CONF_THRESHOLD * 100).toFixed(0)}%`);

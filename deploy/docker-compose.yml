@@ -107,8 +107,6 @@ services:
       MAX_SYMBOLS: "100"
       BATCH_SIZE: "5"
       LOOKBACK_DAYS: "7"
-      # 主掃描偏移天數：使用 DB 資料源，不需要等待延遲
-      SCAN_OFFSET_DAYS: "0"
       # 重試佇列最大保留天數
       RETRY_MAX_DAYS: "14"
       # 待分析佇列存儲目錄
