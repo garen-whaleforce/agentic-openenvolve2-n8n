@@ -108,7 +108,6 @@ export type Config = typeof config;
  */
 export const EASTERN_TIMEZONE = 'America/New_York';
 export const DATE_FORMAT = 'yyyy-MM-dd';
-export const CRON_SCHEDULE = '0 6 * * *'; // 每天 06:00
 export const LINE_API_BASE = 'https://api.line.me/v2/bot';
 export const LINE_MESSAGE_MAX_LENGTH = 3800;
 export const LINE_MESSAGE_MAX_COUNT = 5;
