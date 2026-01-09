@@ -803,6 +803,141 @@ def get_peer_facts_summary(symbol: str, quarter: str, limit: int = 5) -> List[Di
 
 
 # =============================================================================
+# Earnings Calendar Functions (replaces FMP API)
+# =============================================================================
+
+def get_earnings_calendar_for_date(
+    target_date: str,
+    min_market_cap: float = 1_000_000_000,
+) -> List[Dict]:
+    """
+    Get earnings calls scheduled for a specific date from the database.
+    Uses earnings_transcripts table with company profile enrichment.
+
+    Args:
+        target_date: Date in YYYY-MM-DD format
+        min_market_cap: Minimum market cap filter (not used in DB, but kept for API compatibility)
+
+    Returns:
+        List of earnings call items with company info
+    """
+    with get_cursor() as cur:
+        if cur is None:
+            return []
+        try:
+            cur.execute("""
+                SELECT
+                    et.symbol,
+                    et.year,
+                    et.quarter,
+                    et.transcript_date::date as date,
+                    et.market_timing,
+                    c.name as company,
+                    c.sector,
+                    c.sub_sector
+                FROM earnings_transcripts et
+                LEFT JOIN companies c ON et.symbol = c.symbol
+                WHERE et.transcript_date::date = %s
+                ORDER BY c.name
+            """, (target_date,))
+
+            results = []
+            for row in cur.fetchall():
+                results.append({
+                    "symbol": row["symbol"],
+                    "company": row["company"] or row["symbol"],
+                    "sector": row["sector"],
+                    "exchange": None,  # Not stored in DB, will be enriched if needed
+                    "date": str(row["date"]) if row["date"] else target_date,
+                    "eps_estimated": None,  # Not stored in earnings_transcripts
+                    "eps_actual": None,
+                    "market_cap": None,  # Would need separate lookup
+                    "market_timing": row["market_timing"],
+                    "year": row["year"],
+                    "quarter": row["quarter"],
+                    "raw": {
+                        "symbol": row["symbol"],
+                        "date": str(row["date"]) if row["date"] else target_date,
+                        "market_timing": row["market_timing"],
+                    },
+                })
+            return results
+        except Exception as e:
+            logger.debug(f"get_earnings_calendar_for_date error: {e}")
+    return []
+
+
+def get_earnings_calendar_for_range(
+    start_date: str,
+    end_date: str,
+    min_market_cap: float = 1_000_000_000,
+) -> List[Dict]:
+    """
+    Get earnings calls scheduled within a date range from the database.
+    Uses earnings_transcripts table.
+
+    Args:
+        start_date: Start date in YYYY-MM-DD format
+        end_date: End date in YYYY-MM-DD format
+        min_market_cap: Minimum market cap filter (not used in DB)
+
+    Returns:
+        List of earnings call items with company info
+    """
+    with get_cursor() as cur:
+        if cur is None:
+            return []
+        try:
+            cur.execute("""
+                SELECT
+                    et.symbol,
+                    et.year,
+                    et.quarter,
+                    et.transcript_date::date as date,
+                    et.market_timing,
+                    c.name as company,
+                    c.sector,
+                    c.sub_sector
+                FROM earnings_transcripts et
+                LEFT JOIN companies c ON et.symbol = c.symbol
+                WHERE et.transcript_date::date >= %s
+                  AND et.transcript_date::date <= %s
+                ORDER BY et.transcript_date DESC, c.name
+            """, (start_date, end_date))
+
+            results = []
+            seen = set()  # Deduplicate by symbol+date
+            for row in cur.fetchall():
+                key = (row["symbol"], str(row["date"]))
+                if key in seen:
+                    continue
+                seen.add(key)
+
+                results.append({
+                    "symbol": row["symbol"],
+                    "company": row["company"] or row["symbol"],
+                    "sector": row["sector"],
+                    "exchange": None,
+                    "date": str(row["date"]) if row["date"] else None,
+                    "eps_estimated": None,
+                    "eps_actual": None,
+                    "market_cap": None,
+                    "market_timing": row["market_timing"],
+                    "year": row["year"],
+                    "quarter": row["quarter"],
+                    "raw": {
+                        "symbol": row["symbol"],
+                        "date": str(row["date"]) if row["date"] else None,
+                        "market_timing": row["market_timing"],
+                    },
+                })
+            return results
+        except Exception as e:
+            logger.debug(f"get_earnings_calendar_for_range error: {e}")
+    return []
+
+
+# =============================================================================
 # Earnings Surprise Functions
 # =============================================================================
 

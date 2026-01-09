@@ -45,7 +45,7 @@ const envSchema = z.object({
     .default('7')
     .transform((v) => parseInt(v, 10)),
   // 主掃描偏移天數：掃描 (今天 - SCAN_OFFSET_DAYS) 到 (今天 - SCAN_OFFSET_DAYS - LOOKBACK_DAYS) 的資料
-  // 設為 3 表示掃描 3-10 天前的資料，確保 FMP transcript 已上傳
+  // 設為 0 表示掃描最新資料（現在使用 DB 作為資料源，transcript 已即時可用）
   SCAN_OFFSET_DAYS: z
     .string()
     .default('3')
