@@ -335,9 +335,11 @@ def get_earnings_calendar_for_date(
     target_date: Optional[str] = None, min_market_cap: float = 1_000_000_000, skip_cache: bool = False
 ) -> List[Dict]:
     """
-    Fetch earnings calendar for a specific date.
-    Uses PostgreSQL database as the primary (and only) source.
+    Fetch earnings calendar for a specific UTC date and filter by market cap.
+    Uses FMP API as the primary source.
     """
+    _require_api_key()
+
     if target_date is None:
         date_str = datetime.utcnow().strftime("%Y-%m-%d")
     else:
@@ -347,18 +349,69 @@ def get_earnings_calendar_for_date(
             raise ValueError("target_date must be in YYYY-MM-DD format") from exc
         date_str = target_date
 
-    # Use PostgreSQL database exclusively
-    if FMP_DB_ENABLED:
-        try:
-            results = pg_client.get_earnings_calendar_for_date(date_str, min_market_cap)
-            logger.debug("Earnings calendar for %s loaded from PostgreSQL DB (%d items)", date_str, len(results))
-            return results
-        except Exception as e:
-            logger.warning("PostgreSQL earnings calendar lookup failed: %s", e)
-            return []
+    cache_ttl = int(os.getenv("EARNINGS_CALENDAR_CACHE_MIN", "30"))
+    cache_key = f"fmp:earnings-calendar:{date_str}:{int(min_market_cap)}:US"
+    cached = None if skip_cache else get_fmp_cache(cache_key, max_age_minutes=cache_ttl)
+    if cached is not None and "data" in cached:
+        cached_data = cached.get("data") or []
+        if cached_data and all(item.get("company") and item.get("sector") and item.get("exchange") for item in cached_data):
+            return cached_data
 
-    logger.warning("PostgreSQL DB not available, earnings calendar will be empty")
-    return []
+    client = _get_client()
+    resp = _get(client, "earnings-calendar", params={"from": date_str, "to": date_str, "apikey": FMP_API_KEY})
+    data = resp.json() or []
+    if not isinstance(data, list):
+        raise ValueError("Unexpected earnings calendar response format")
+
+    def _safe_float(val: object) -> Optional[float]:
+        try:
+            return float(val)
+        except Exception:
+            return None
+
+    results: List[Dict] = []
+    allowed_exchange_prefixes = ("NASDAQ", "NYSE", "AMEX", "BATS", "ARCA")
+    allowed_countries = {"US", "USA", "UNITED STATES", "UNITED STATES OF AMERICA"}
+    for item in data:
+        symbol = item.get("symbol")
+        if not symbol:
+            continue
+        profile = get_company_profile(symbol)
+        country = (profile.get("country") or "").upper()
+        exchange = (profile.get("exchange") or "").upper()
+        if exchange:
+            if not any(exchange.startswith(pref) for pref in allowed_exchange_prefixes):
+                continue
+        else:
+            if not country or country not in allowed_countries:
+                continue
+
+        market_cap = profile.get("market_cap")
+        if market_cap is None:
+            market_cap = get_market_cap(symbol)
+        if market_cap is None or market_cap < min_market_cap:
+            continue
+
+        eps_est = _safe_float(item.get("epsEstimated"))
+        eps_act = _safe_float(item.get("epsActual"))
+        company = item.get("company") or item.get("companyName") or profile.get("company") or ""
+        sector = item.get("sector") or profile.get("sector") or ""
+        results.append(
+            {
+                "symbol": symbol,
+                "company": company,
+                "sector": sector,
+                "exchange": profile.get("exchange"),
+                "date": item.get("date"),
+                "eps_estimated": eps_est,
+                "eps_actual": eps_act,
+                "market_cap": market_cap,
+                "raw": item,
+            }
+        )
+
+    set_fmp_cache(cache_key, {"data": results})
+    return results
 
 
 def get_earnings_calendar_for_range(
@@ -368,8 +421,8 @@ def get_earnings_calendar_for_range(
     skip_cache: bool = False,
 ) -> List[Dict]:
     """
-    Fetch earnings calendars between start_date and end_date (inclusive).
-    Uses PostgreSQL database as the primary (and only) source.
+    Fetch earnings calendars between start_date and end_date (inclusive) and deduplicate by symbol/date.
+    Uses FMP API as the primary source.
     """
     try:
         start_dt = datetime.strptime(start_date, "%Y-%m-%d").date()
@@ -383,23 +436,20 @@ def get_earnings_calendar_for_range(
     if start_dt > end_dt:
         start_dt, end_dt = end_dt, start_dt
 
-    # Use PostgreSQL database exclusively
-    if FMP_DB_ENABLED:
-        try:
-            results = pg_client.get_earnings_calendar_for_range(
-                start_dt.isoformat(),
-                end_dt.isoformat(),
-                min_market_cap,
-            )
-            logger.debug("Earnings calendar for %s to %s loaded from PostgreSQL DB (%d items)",
-                        start_dt, end_dt, len(results))
-            return results
-        except Exception as e:
-            logger.warning("PostgreSQL earnings calendar range lookup failed: %s", e)
-            return []
+    # Collect results across each day (since per-day caching already enriches with market cap)
+    all_results: List[Dict] = []
+    seen_keys: set[tuple[str, str]] = set()
+    current = start_dt
+    while current <= end_dt:
+        day_results = get_earnings_calendar_for_date(current.isoformat(), min_market_cap, skip_cache)
+        for item in day_results:
+            key = (item.get("symbol"), item.get("date"))
+            if key not in seen_keys:
+                seen_keys.add(key)
+                all_results.append(item)
+        current += timedelta(days=1)
 
-    logger.warning("PostgreSQL DB not available, earnings calendar will be empty")
-    return []
+    return all_results
 
 
 def _historical_prices(symbol: str, start: datetime, end: datetime) -> List[dict]:
